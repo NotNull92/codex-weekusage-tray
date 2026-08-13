@@ -40,7 +40,7 @@ dotnet publish src/CodexWeekUsageTray/CodexWeekUsageTray.csproj `
   -p:PublishSingleFile=true -o artifacts/win-x64
 ```
 
-Run `artifacts/win-x64/CodexWeekUsageTray.exe`. Each user still needs the Codex CLI. If the user is not signed in, the app can open the browser sign-in page.
+Run `artifacts/win-x64/CodexWeekUsageTray.exe`. Embedded assemblies are compressed to keep the standalone EXE smaller; the first launch can take slightly longer. Each user still needs the Codex CLI. If the user is not signed in, the app can open the browser sign-in page.
 
 ## Privacy
 

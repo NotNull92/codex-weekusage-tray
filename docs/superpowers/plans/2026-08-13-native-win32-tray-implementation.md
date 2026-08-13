@@ -89,7 +89,7 @@ if /I "%~1"=="tests" (
   "%CXX%" -std=c++17 -Wall -Wextra -Werror -I"%ROOT%src" "%ROOT%tests\native_tests.cpp" "%ROOT%src\core.cpp" -o "%OUT%\CodexWeekUsageTrayTests.exe"
   exit /b %errorlevel%
 )
-"%CXX%" -std=c++17 -Os -s -static -municode -mwindows -I"%ROOT%src" "%ROOT%src\main.cpp" "%ROOT%src\core.cpp" "%ROOT%src\codex_client.cpp" -lgdiplus -lshell32 -lcomctl32 -lole32 -o "%OUT%\CodexWeekUsageTray.exe"
+"%CXX%" -std=c++17 -Os -s -static -municode -mwindows -I"%ROOT%src" "%ROOT%src\main.cpp" "%ROOT%src\core.cpp" "%ROOT%src\codex_client.cpp" -lgdiplus -lshell32 -lcomctl32 -lole32 -lwinhttp -o "%OUT%\CodexWeekUsageTray.exe"
 ```
 
 Add `native/out/` to `.gitignore`.
@@ -668,8 +668,15 @@ Expected: native checks pass; working tree contains only intended deletion/docum
 ```bash
 git add -A
 git commit -m "feat: replace managed tray with native Win32 app"
-git push origin main
-gh release create v2.0.0 artifacts/CodexWeekUsageTray-win-x64-v2.0.0.zip artifacts/SHA256SUMS-v2.0.0.txt --target HEAD --title "v2.0.0" --notes "Native Win32 rewrite: no .NET runtime required. Verify SHA-256 before running. The EXE is not Authenticode-signed yet."
+git push origin feat/native-win32
+```
+
+Then fast-forward `main` only after confirming its worktree is clean and still at the reviewed base, and create the release from that exact `main` commit:
+
+```bash
+git -C C:/Users/PC/Desktop/Cowork/codex-weekusage-tray merge --ff-only feat/native-win32
+git -C C:/Users/PC/Desktop/Cowork/codex-weekusage-tray push origin main
+gh release create v2.0.0 artifacts/CodexWeekUsageTray-win-x64-v2.0.0.zip artifacts/SHA256SUMS-v2.0.0.txt --target main --title "v2.0.0" --notes "Native Win32 rewrite: no .NET runtime required. Verify SHA-256 before running. The EXE is not Authenticode-signed yet."
 ```
 
 Verify the public download’s ZIP hash, the contained EXE hash, and the exact three or fewer expected archive entries before reporting completion.

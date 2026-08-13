@@ -42,6 +42,12 @@ dotnet publish src/CodexWeekUsageTray/CodexWeekUsageTray.csproj `
 
 Run `artifacts/win-x64/CodexWeekUsageTray.exe`. Embedded assemblies are compressed to keep the standalone EXE smaller; the first launch can take slightly longer. Each user still needs the Codex CLI. If the user is not signed in, the app can open the browser sign-in page.
 
+## Remove old tray entries
+
+Run `uninstall.cmd` from the release folder to remove saved Codex WeekUsage Tray entries from **Other system tray icons**. It lists the matching entries first and asks you to type `REMOVE` before changing anything. Use `uninstall.cmd -DryRun` to only view the entries.
+
+It stops matching Codex WeekUsage Tray processes and removes only their saved Windows tray settings. It does not delete EXE files or change settings for other apps.
+
 ## Privacy
 
 This repository contains no account names, API keys, access tokens, or real usage data. The app only displays the current session limit returned by Codex App Server and does not save it to a file or a remote server.

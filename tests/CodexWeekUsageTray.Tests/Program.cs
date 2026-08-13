@@ -68,13 +68,55 @@ if (loginStart.LoginId != "login-123")
     throw new InvalidOperationException("A managed ChatGPT login must retain Codex's login ID for cancellation and completion.");
 }
 
+using var openAiLoginStartResponse = JsonDocument.Parse("""
+{ "loginId": "login-456", "authUrl": "https://auth.openai.com/codex/device" }
+""");
+if (CodexLoginStart.Parse(openAiLoginStartResponse.RootElement).AuthorizationUrl.Host != "auth.openai.com")
+{
+    throw new InvalidOperationException("An official OpenAI login URL must be accepted.");
+}
+
+AssertRejectedLoginUrl("https://login.example.test/auth/codex");
+AssertRejectedLoginUrl("https://chatgpt.com.evil.test/auth/codex");
+
 using var loginCompletedResponse = JsonDocument.Parse("""
 { "loginId": "login-123", "success": false, "error": "cancelled" }
 """);
 var loginCompleted = CodexLoginCompleted.Parse(loginCompletedResponse.RootElement);
-if (loginCompleted.LoginId != "login-123" || loginCompleted.Succeeded || loginCompleted.Error != "cancelled")
+if (loginCompleted.LoginId != "login-123" || loginCompleted.Succeeded)
 {
-    throw new InvalidOperationException("A managed ChatGPT login completion must retain its login ID and failure details.");
+    throw new InvalidOperationException("A managed ChatGPT login completion must retain its login ID and success state.");
+}
+
+var codexLocatorRoot = Path.Combine(Path.GetTempPath(), $"codex-locator-test-{Guid.NewGuid():N}");
+try
+{
+    var officialCodexDirectory = Path.Combine(codexLocatorRoot, "Programs", "OpenAI", "Codex", "bin");
+    Directory.CreateDirectory(officialCodexDirectory);
+    var officialCodexPath = Path.Combine(officialCodexDirectory, "codex.exe");
+    File.WriteAllText(officialCodexPath, string.Empty);
+    var resolvedCodexPath = CodexUsageClient.ResolveExecutablePath(codexLocatorRoot);
+    if (!string.Equals(resolvedCodexPath, officialCodexPath, StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException("The official Codex install path must take priority over PATH entries.");
+    }
+
+    File.Delete(officialCodexPath);
+    try
+    {
+        _ = CodexUsageClient.ResolveExecutablePath(codexLocatorRoot);
+        throw new InvalidOperationException("A missing Codex CLI must not be resolved from PATH or the current directory.");
+    }
+    catch (InvalidOperationException exception) when (exception.Message == "The official Codex CLI could not be found in its standard install location.")
+    {
+    }
+}
+finally
+{
+    if (Directory.Exists(codexLocatorRoot))
+    {
+        Directory.Delete(codexLocatorRoot, recursive: true);
+    }
 }
 
 using var startupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
@@ -166,3 +208,20 @@ static Rectangle GetInkBounds(Bitmap bitmap)
 }
 
 static bool IsInk(Color pixel) => pixel.A > 0 && pixel.B > pixel.R && pixel.B > pixel.G;
+
+static void AssertRejectedLoginUrl(string authUrl)
+{
+    using var response = JsonDocument.Parse($$"""
+    { "loginId": "login-456", "authUrl": "{{authUrl}}" }
+    """);
+    try
+    {
+        _ = CodexLoginStart.Parse(response.RootElement);
+    }
+    catch (InvalidOperationException)
+    {
+        return;
+    }
+
+    throw new InvalidOperationException("A non-OpenAI HTTPS login URL must not be opened in the browser.");
+}

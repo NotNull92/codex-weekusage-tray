@@ -29,9 +29,11 @@ public sealed class CodexUsageClient : IAsyncDisposable
 
     public static async Task<CodexUsageClient> StartAsync(CancellationToken cancellationToken)
     {
+        var codexPath = ResolveExecutablePath(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
         var process = Process.Start(new ProcessStartInfo
         {
-            FileName = "codex",
+            FileName = codexPath,
             Arguments = "app-server --stdio",
             CreateNoWindow = true,
             UseShellExecute = false,
@@ -54,7 +56,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
                     {
                         name = "codex-weekusage-tray",
                         title = "Codex WeekUsage Tray",
-                        version = "1.0.3",
+                        version = "1.0.8",
                     },
                 },
                 cancellationToken);
@@ -66,6 +68,17 @@ public sealed class CodexUsageClient : IAsyncDisposable
             await client.DisposeAsync();
             throw;
         }
+    }
+
+    internal static string ResolveExecutablePath(string localApplicationData)
+    {
+        var officialInstall = Path.Combine(localApplicationData, "Programs", "OpenAI", "Codex", "bin", "codex.exe");
+        if (File.Exists(officialInstall))
+        {
+            return officialInstall;
+        }
+
+        throw new InvalidOperationException("The official Codex CLI could not be found in its standard install location.");
     }
 
     public async Task<QuotaSnapshot?> RefreshAsync(CancellationToken cancellationToken)

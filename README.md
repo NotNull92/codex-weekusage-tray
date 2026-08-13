@@ -42,6 +42,13 @@ dotnet publish src/CodexWeekUsageTray/CodexWeekUsageTray.csproj `
 
 Run `artifacts/win-x64/CodexWeekUsageTray.exe`. Embedded assemblies are compressed to keep the standalone EXE smaller; the first launch can take slightly longer. Each user still needs the Codex CLI. If the user is not signed in, the app can open the browser sign-in page.
 
+## Security
+
+- The app runs Codex only from its standard per-user OpenAI install and never resolves `codex.exe` from the current folder or `PATH`.
+- It opens sign-in only on HTTPS `chatgpt.com` or `auth.openai.com` URLs returned by Codex App Server.
+- It does not store a password, API key, token, or usage history. Trust only a Codex CLI installed from OpenAI.
+- Release binaries are not Authenticode-signed yet. Verify the published SHA-256 checksum before running a downloaded EXE.
+
 ## Remove old tray entries
 
 Run `uninstall.cmd` from the release folder to remove saved Codex WeekUsage Tray entries from **Other system tray icons** right away. Use `uninstall.cmd -DryRun` to only view the entries.

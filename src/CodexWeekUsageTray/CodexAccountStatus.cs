@@ -23,16 +23,21 @@ public sealed record CodexLoginStart(string LoginId, Uri AuthorizationUrl)
             && loginIdProperty.GetString() is { Length: > 0 } loginId
             && result.TryGetProperty("authUrl", out var authUrl)
             && Uri.TryCreate(authUrl.GetString(), UriKind.Absolute, out var authorizationUrl)
-            && authorizationUrl.Scheme == Uri.UriSchemeHttps)
+            && authorizationUrl.Scheme == Uri.UriSchemeHttps
+            && IsOfficialLoginHost(authorizationUrl.Host))
         {
             return new CodexLoginStart(loginId, authorizationUrl);
         }
 
         throw new InvalidOperationException("Codex did not return a secure browser login URL.");
     }
+
+    private static bool IsOfficialLoginHost(string host) =>
+        string.Equals(host, "chatgpt.com", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(host, "auth.openai.com", StringComparison.OrdinalIgnoreCase);
 }
 
-public sealed record CodexLoginCompleted(string? LoginId, bool Succeeded, string? Error)
+public sealed record CodexLoginCompleted(string? LoginId, bool Succeeded)
 {
     public static CodexLoginCompleted Parse(JsonElement parameters)
     {
@@ -43,10 +48,6 @@ public sealed record CodexLoginCompleted(string? LoginId, bool Succeeded, string
         var succeeded = parameters.TryGetProperty("success", out var success)
             && success.ValueKind is JsonValueKind.True or JsonValueKind.False
             && success.GetBoolean();
-        var error = parameters.TryGetProperty("error", out var errorProperty)
-            && errorProperty.ValueKind == JsonValueKind.String
-                ? errorProperty.GetString()
-                : null;
-        return new CodexLoginCompleted(loginId, succeeded, error);
+        return new CodexLoginCompleted(loginId, succeeded);
     }
 }

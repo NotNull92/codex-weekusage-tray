@@ -185,9 +185,7 @@ public sealed class TrayApplicationContext : ApplicationContext
             }
             else
             {
-                UpdateStatus(_snapshot, true, completion.Error is null
-                    ? "Sign-in did not finish."
-                    : "Sign-in did not finish.");
+                UpdateStatus(_snapshot, true, "Sign-in did not finish.");
             }
         });
 

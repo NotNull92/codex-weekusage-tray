@@ -12,6 +12,6 @@ internal static class Program
         }
 
         ApplicationConfiguration.Initialize();
-        Application.Run(new TaskbarOverlayForm());
+        Application.Run(new TrayApplicationContext());
     }
 }

@@ -3,22 +3,25 @@ namespace CodexWeekUsageTray;
 public sealed class UsagePopupForm : Form
 {
     private readonly Func<Task> _refresh;
+    private readonly Func<Task> _login;
     private readonly Label _remaining = new();
     private readonly Label _used = new();
     private readonly Label _reset = new();
     private readonly Label _countdown = new();
     private readonly Button _refreshButton = new();
+    private readonly Button _loginButton = new();
     private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1_000 };
     private QuotaSnapshot? _snapshot;
     private string? _error;
 
-    public UsagePopupForm(Func<Task> refresh)
+    public UsagePopupForm(Func<Task> refresh, Func<Task> login)
     {
         _refresh = refresh;
+        _login = login;
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.FromArgb(36, 36, 36);
-        ClientSize = new Size(244, 132);
-        FormBorderStyle = FormBorderStyle.FixedSingle;
+        ClientSize = new Size(244, 154);
+        FormBorderStyle = FormBorderStyle.None;
         ForeColor = Color.White;
         MaximizeBox = false;
         MinimizeBox = false;
@@ -30,44 +33,44 @@ public sealed class UsagePopupForm : Form
         ConfigureLabel(_used, new Point(14, 38), new Size(216, 20), FontStyle.Regular);
         ConfigureLabel(_reset, new Point(14, 62), new Size(216, 20), FontStyle.Regular);
         ConfigureLabel(_countdown, new Point(14, 86), new Size(216, 20), FontStyle.Regular);
-        _refreshButton.Location = new Point(166, 102);
-        _refreshButton.Size = new Size(64, 24);
+        _loginButton.Location = new Point(74, 120);
+        _loginButton.Size = new Size(76, 24);
+        _loginButton.Text = "로그인";
+        _loginButton.ForeColor = SystemColors.ControlText;
+        _loginButton.UseVisualStyleBackColor = true;
+        _loginButton.Click += LoginButtonClicked;
+        _refreshButton.Location = new Point(160, 120);
+        _refreshButton.Size = new Size(70, 24);
         _refreshButton.Text = "새로 고침";
+        _refreshButton.ForeColor = SystemColors.ControlText;
         _refreshButton.UseVisualStyleBackColor = true;
         _refreshButton.Click += RefreshButtonClicked;
 
-        Controls.AddRange([_remaining, _used, _reset, _countdown, _refreshButton]);
+        Controls.AddRange([_remaining, _used, _reset, _countdown, _loginButton, _refreshButton]);
         _countdownTimer.Tick += (_, _) => UpdateCountdown();
     }
 
-    public void ShowFor(QuotaSnapshot? snapshot, Point overlayLocation, Size overlaySize, string? error)
+    public void ShowFor(QuotaSnapshot? snapshot, Point anchor, bool loginRequired, string? error)
     {
         _snapshot = snapshot;
         _error = error;
-        UpdateText();
+        UpdateText(loginRequired);
 
-        var screen = Screen.FromPoint(overlayLocation).WorkingArea;
-        var x = Math.Clamp(overlayLocation.X + overlaySize.Width - Width, screen.Left, screen.Right - Width);
-        var y = overlayLocation.Y - Height - 6;
-        Location = new Point(x, y >= screen.Top ? y : overlayLocation.Y + overlaySize.Height + 6);
+        var screen = Screen.FromPoint(anchor).WorkingArea;
+        var x = Math.Clamp(anchor.X - Width, screen.Left, screen.Right - Width);
+        var y = anchor.Y - Height - 8;
+        Location = new Point(x, y >= screen.Top ? y : Math.Min(anchor.Y + 8, screen.Bottom - Height));
 
         Show();
         BringToFront();
         _countdownTimer.Start();
     }
 
-    public void UpdateSnapshot(QuotaSnapshot? snapshot, string? error)
+    public void UpdateSnapshot(QuotaSnapshot? snapshot, bool loginRequired, string? error)
     {
         _snapshot = snapshot;
         _error = error;
-        UpdateText();
-    }
-
-    protected override void OnDeactivate(EventArgs e)
-    {
-        base.OnDeactivate(e);
-        Hide();
-        _countdownTimer.Stop();
+        UpdateText(loginRequired);
     }
 
     protected override void Dispose(bool disposing)
@@ -101,8 +104,33 @@ public sealed class UsagePopupForm : Form
         }
     }
 
-    private void UpdateText()
+    private async void LoginButtonClicked(object? sender, EventArgs e)
     {
+        _loginButton.Enabled = false;
+        try
+        {
+            await _login();
+        }
+        finally
+        {
+            _loginButton.Enabled = true;
+        }
+    }
+
+    private void UpdateText(bool loginRequired)
+    {
+        _loginButton.Visible = loginRequired;
+        _refreshButton.Text = loginRequired ? "다시 확인" : "새로 고침";
+
+        if (loginRequired)
+        {
+            _remaining.Text = "Codex 로그인이 필요합니다";
+            _used.Text = _error ?? "ChatGPT 계정으로 로그인하세요.";
+            _reset.Text = "로그인 후 7일 제한을 표시합니다.";
+            _countdown.Text = string.Empty;
+            return;
+        }
+
         if (_snapshot is null)
         {
             _remaining.Text = "7일 제한 정보를 찾지 못했습니다";

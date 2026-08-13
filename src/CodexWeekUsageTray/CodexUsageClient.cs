@@ -25,6 +25,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
     }
 
     public event EventHandler<QuotaSnapshot?>? WeeklyQuotaChanged;
+    public event Action<bool>? LoginCompleted;
 
     public static async Task<CodexUsageClient> StartAsync(CancellationToken cancellationToken)
     {
@@ -53,7 +54,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
                     {
                         name = "codex-weekusage-tray",
                         title = "Codex WeekUsage Tray",
-                        version = "1.0.0",
+                        version = "1.0.1",
                     },
                 },
                 cancellationToken);
@@ -73,6 +74,26 @@ public sealed class CodexUsageClient : IAsyncDisposable
         var snapshot = QuotaSnapshot.ParseWeekly(result);
         WeeklyQuotaChanged?.Invoke(this, snapshot);
         return snapshot;
+    }
+
+    public async Task<CodexAccountStatus> ReadAccountAsync(CancellationToken cancellationToken)
+    {
+        var result = await SendRequestAsync("account/read", new { refreshToken = false }, cancellationToken);
+        return CodexAccountStatus.Parse(result);
+    }
+
+    public async Task<Uri> StartChatGptLoginAsync(CancellationToken cancellationToken)
+    {
+        var result = await SendRequestAsync(
+            "account/login/start",
+            new
+            {
+                type = "chatgpt",
+                useHostedLoginSuccessPage = true,
+                appBrand = "codex",
+            },
+            cancellationToken);
+        return CodexLoginStart.Parse(result).AuthorizationUrl;
     }
 
     public async ValueTask DisposeAsync()
@@ -166,11 +187,22 @@ public sealed class CodexUsageClient : IAsyncDisposable
                     continue;
                 }
 
-                if (root.TryGetProperty("method", out var method)
-                    && method.GetString() == "account/rateLimits/updated"
-                    && root.TryGetProperty("params", out var parameters))
+                if (!root.TryGetProperty("method", out var method)
+                    || !root.TryGetProperty("params", out var parameters))
+                {
+                    continue;
+                }
+
+                if (method.GetString() == "account/rateLimits/updated")
                 {
                     WeeklyQuotaChanged?.Invoke(this, QuotaSnapshot.ParseWeekly(parameters));
+                }
+                else if (method.GetString() == "account/login/completed")
+                {
+                    var succeeded = parameters.TryGetProperty("success", out var success)
+                        && success.ValueKind is JsonValueKind.True or JsonValueKind.False
+                        && success.GetBoolean();
+                    LoginCompleted?.Invoke(succeeded);
                 }
             }
         }

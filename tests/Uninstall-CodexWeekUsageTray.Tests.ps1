@@ -16,7 +16,8 @@ try {
     New-ItemProperty -Path $matchingTwo -Name ExecutablePath -Value 'C:\Test\Two\CodexWeekUsageTray.exe' -Force | Out-Null
     New-ItemProperty -Path $otherApp -Name ExecutablePath -Value 'C:\Test\Other\OtherTrayApp.exe' -Force | Out-Null
 
-    & $uninstaller -Yes -RegistryRoot $testRoot
+    $command = "echo.|`"$uninstaller`" -RegistryRoot `"$testRoot`""
+    & cmd.exe /d /c $command
     if ($LASTEXITCODE -ne 0) {
         throw "uninstall.cmd exited with $LASTEXITCODE."
     }

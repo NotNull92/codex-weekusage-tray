@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [switch]$DryRun,
-    [switch]$Yes,
     [string]$RegistryRoot = 'HKCU:\Control Panel\NotifyIconSettings'
 )
 
@@ -38,14 +37,6 @@ try {
     if ($DryRun) {
         Write-Host 'Dry run only. Nothing was changed.'
         exit 0
-    }
-
-    if (-not $Yes) {
-        $answer = Read-Host 'Type REMOVE to clear these settings'
-        if ($answer -cne 'REMOVE') {
-            Write-Host 'Cancelled. Nothing was changed.'
-            exit 0
-        }
     }
 
     $targetPaths = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)

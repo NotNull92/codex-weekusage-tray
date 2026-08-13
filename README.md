@@ -44,7 +44,7 @@ Run `artifacts/win-x64/CodexWeekUsageTray.exe`. Embedded assemblies are compress
 
 ## Remove old tray entries
 
-Run `uninstall.cmd` from the release folder to remove saved Codex WeekUsage Tray entries from **Other system tray icons**. It lists the matching entries first and asks you to type `REMOVE` before changing anything. Use `uninstall.cmd -DryRun` to only view the entries.
+Run `uninstall.cmd` from the release folder to remove saved Codex WeekUsage Tray entries from **Other system tray icons** right away. Use `uninstall.cmd -DryRun` to only view the entries.
 
 It stops matching Codex WeekUsage Tray processes and removes only their saved Windows tray settings. It does not delete EXE files or change settings for other apps.
 

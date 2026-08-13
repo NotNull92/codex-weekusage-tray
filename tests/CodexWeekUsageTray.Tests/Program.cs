@@ -56,9 +56,34 @@ if (!CodexAccountStatus.Parse(chatGptAccount.RootElement).CanReadWeeklyQuota)
 using var loginStartResponse = JsonDocument.Parse("""
 { "loginId": "login-123", "authUrl": "https://chatgpt.com/auth/codex" }
 """);
-if (CodexLoginStart.Parse(loginStartResponse.RootElement).AuthorizationUrl.Scheme != Uri.UriSchemeHttps)
+var loginStart = CodexLoginStart.Parse(loginStartResponse.RootElement);
+if (loginStart.AuthorizationUrl.Scheme != Uri.UriSchemeHttps)
 {
     throw new InvalidOperationException("Login must only open the HTTPS authorization URL from Codex.");
+}
+
+if (loginStart.LoginId != "login-123")
+{
+    throw new InvalidOperationException("A managed ChatGPT login must retain Codex's login ID for cancellation and completion.");
+}
+
+using var loginCompletedResponse = JsonDocument.Parse("""
+{ "loginId": "login-123", "success": false, "error": "cancelled" }
+""");
+var loginCompleted = CodexLoginCompleted.Parse(loginCompletedResponse.RootElement);
+if (loginCompleted.LoginId != "login-123" || loginCompleted.Succeeded || loginCompleted.Error != "cancelled")
+{
+    throw new InvalidOperationException("A managed ChatGPT login completion must retain its login ID and failure details.");
+}
+
+using var startupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+try
+{
+    await using var client = await CodexUsageClient.StartAsync(startupTimeout.Token);
+}
+catch (OperationCanceledException exception)
+{
+    throw new InvalidOperationException("Codex App Server initialization must not wait indefinitely for its first JSON response.", exception);
 }
 
 if (!TrayStatus.ShouldOfferLogin(null, loginRequired: false))
@@ -69,6 +94,16 @@ if (!TrayStatus.ShouldOfferLogin(null, loginRequired: false))
 if (TrayStatus.ShouldOfferLogin(weekly, loginRequired: false))
 {
     throw new InvalidOperationException("A weekly quota must not show a redundant login action.");
+}
+
+if (TrayStatus.DisplayLabel(null) != "--")
+{
+    throw new InvalidOperationException("An unavailable quota must render as two dashes without a W prefix.");
+}
+
+if (TrayStatus.DisplayLabel(weekly) != "73")
+{
+    throw new InvalidOperationException("A weekly quota must render only its remaining percentage.");
 }
 
 if (QuotaSnapshot.FormatTimeRemaining(new TimeSpan(days: 3, hours: 4, minutes: 5, seconds: 0)) != "3일 4시간 남음")

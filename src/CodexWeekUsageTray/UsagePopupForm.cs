@@ -33,14 +33,14 @@ public sealed class UsagePopupForm : Form
         ConfigureLabel(_used, new Point(14, 38), new Size(216, 20), FontStyle.Regular);
         ConfigureLabel(_reset, new Point(14, 62), new Size(216, 20), FontStyle.Regular);
         ConfigureLabel(_countdown, new Point(14, 86), new Size(216, 20), FontStyle.Regular);
-        _loginButton.Location = new Point(74, 120);
-        _loginButton.Size = new Size(76, 24);
+        _loginButton.Location = new Point(14, 120);
+        _loginButton.Size = new Size(126, 24);
         _loginButton.Text = "로그인";
         _loginButton.ForeColor = SystemColors.ControlText;
         _loginButton.UseVisualStyleBackColor = true;
         _loginButton.Click += LoginButtonClicked;
-        _refreshButton.Location = new Point(160, 120);
-        _refreshButton.Size = new Size(70, 24);
+        _refreshButton.Location = new Point(150, 120);
+        _refreshButton.Size = new Size(80, 24);
         _refreshButton.Text = "새로 고침";
         _refreshButton.ForeColor = SystemColors.ControlText;
         _refreshButton.UseVisualStyleBackColor = true;
@@ -50,11 +50,11 @@ public sealed class UsagePopupForm : Form
         _countdownTimer.Tick += (_, _) => UpdateCountdown();
     }
 
-    public void ShowFor(QuotaSnapshot? snapshot, Point anchor, bool loginRequired, string? error)
+    public void ShowFor(QuotaSnapshot? snapshot, Point anchor, bool loginRequired, bool loginInProgress, string? error)
     {
         _snapshot = snapshot;
         _error = error;
-        UpdateText(loginRequired);
+        UpdateText(loginRequired, loginInProgress);
 
         var screen = Screen.FromPoint(anchor).WorkingArea;
         var x = Math.Clamp(anchor.X - Width, screen.Left, screen.Right - Width);
@@ -66,11 +66,11 @@ public sealed class UsagePopupForm : Form
         _countdownTimer.Start();
     }
 
-    public void UpdateSnapshot(QuotaSnapshot? snapshot, bool loginRequired, string? error)
+    public void UpdateSnapshot(QuotaSnapshot? snapshot, bool loginRequired, bool loginInProgress, string? error)
     {
         _snapshot = snapshot;
         _error = error;
-        UpdateText(loginRequired);
+        UpdateText(loginRequired, loginInProgress);
     }
 
     protected override void Dispose(bool disposing)
@@ -117,10 +117,11 @@ public sealed class UsagePopupForm : Form
         }
     }
 
-    private void UpdateText(bool loginRequired)
+    private void UpdateText(bool loginRequired, bool loginInProgress)
     {
         var shouldOfferLogin = TrayStatus.ShouldOfferLogin(_snapshot, loginRequired);
         _loginButton.Visible = shouldOfferLogin;
+        _loginButton.Text = loginInProgress ? "로그인 다시 시작" : "로그인";
         _refreshButton.Text = shouldOfferLogin ? "다시 확인" : "새로 고침";
 
         if (shouldOfferLogin)

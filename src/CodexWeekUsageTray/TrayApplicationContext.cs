@@ -15,6 +15,8 @@ public sealed class TrayApplicationContext : ApplicationContext
     private string? _error;
     private bool _loginRequired;
     private bool _loginInProgress;
+    private bool _loginStarting;
+    private string? _pendingLoginId;
 
     public TrayApplicationContext()
     {
@@ -89,28 +91,43 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private async Task StartLoginAsync()
     {
-        if (_loginInProgress)
+        if (_loginStarting)
         {
             return;
         }
 
-        if (!await EnsureClientAsync() || _client is not { } client)
-        {
-            return;
-        }
-
-        _loginInProgress = true;
-        UpdateStatus(_snapshot, true, "브라우저에서 로그인을 시작합니다.");
+        _loginStarting = true;
         try
         {
-            var authorizationUrl = await client.StartChatGptLoginAsync(CancellationToken.None);
-            Process.Start(new ProcessStartInfo(authorizationUrl.AbsoluteUri) { UseShellExecute = true });
+            if (!await EnsureClientAsync() || _client is not { } client)
+            {
+                return;
+            }
+
+            if (_pendingLoginId is not null)
+            {
+                await client.CancelChatGptLoginAsync(_pendingLoginId, CancellationToken.None);
+            }
+
+            _pendingLoginId = null;
+            _loginInProgress = false;
+            UpdateStatus(_snapshot, true, "브라우저에서 로그인을 시작합니다.");
+            var login = await client.StartChatGptLoginAsync(CancellationToken.None);
+            _pendingLoginId = login.LoginId;
+            _loginInProgress = true;
+            using var browser = Process.Start(new ProcessStartInfo(login.AuthorizationUrl.AbsoluteUri) { UseShellExecute = true })
+                ?? throw new InvalidOperationException("기본 브라우저를 열 수 없습니다.");
             UpdateStatus(_snapshot, true, "브라우저에서 로그인을 완료하세요.");
         }
-        catch
+        catch (Exception exception)
         {
-            _loginInProgress = false;
-            UpdateStatus(_snapshot, true, "로그인을 시작할 수 없습니다.");
+            _loginInProgress = _pendingLoginId is not null;
+            UpdateStatus(_snapshot, true, $"Codex OAuth를 시작할 수 없습니다: {exception.Message}");
+        }
+        finally
+        {
+            _loginStarting = false;
+            UpdateStatus(_snapshot, _loginRequired, _error);
         }
     }
 
@@ -144,24 +161,33 @@ public sealed class TrayApplicationContext : ApplicationContext
             _client.LoginCompleted += LoginCompleted;
             return true;
         }
-        catch
+        catch (Exception exception)
         {
-            UpdateStatus(null, true, "Codex CLI를 실행할 수 없습니다.");
+            UpdateStatus(null, true, $"Codex CLI를 실행할 수 없습니다: {exception.Message}");
             return false;
         }
     }
 
-    private void LoginCompleted(bool succeeded) =>
+    private void LoginCompleted(CodexLoginCompleted completion) =>
         RunOnUi(async () =>
         {
+            if (_pendingLoginId is null
+                || !string.Equals(_pendingLoginId, completion.LoginId, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _pendingLoginId = null;
             _loginInProgress = false;
-            if (succeeded)
+            if (completion.Succeeded)
             {
                 await RefreshAsync();
             }
             else
             {
-                UpdateStatus(_snapshot, true, "로그인이 완료되지 않았습니다.");
+                UpdateStatus(_snapshot, true, completion.Error is null
+                    ? "로그인이 완료되지 않았습니다."
+                    : $"로그인이 완료되지 않았습니다: {completion.Error}");
             }
         });
 
@@ -181,7 +207,7 @@ public sealed class TrayApplicationContext : ApplicationContext
             return;
         }
 
-        _popup.ShowFor(_snapshot, Cursor.Position, _loginRequired, _error);
+        _popup.ShowFor(_snapshot, Cursor.Position, _loginRequired, _loginInProgress, _error);
     }
 
     private void UpdateStatus(QuotaSnapshot? snapshot, bool loginRequired, string? error)
@@ -189,18 +215,19 @@ public sealed class TrayApplicationContext : ApplicationContext
         _snapshot = snapshot;
         _loginRequired = TrayStatus.ShouldOfferLogin(snapshot, loginRequired);
         _error = error;
-        _popup.UpdateSnapshot(snapshot, _loginRequired, error);
-        _loginMenu.Enabled = !_loginInProgress;
+        _popup.UpdateSnapshot(snapshot, _loginRequired, _loginInProgress, error);
+        _loginMenu.Enabled = !_loginStarting;
+        _loginMenu.Text = _loginInProgress ? "Codex 로그인 다시 시작" : "Codex 로그인";
 
         var nextIcon = TrayIconRenderer.Create(snapshot, _loginRequired, error is not null && !_loginRequired);
         _notifyIcon.Icon = nextIcon;
         _icon?.Dispose();
         _icon = nextIcon;
         _notifyIcon.Text = snapshot is not null
-            ? $"W {snapshot.RemainingPercent}% · 7일 잔여"
+            ? $"{snapshot.RemainingPercent}% · 7일 잔여"
             : _loginRequired
-                ? "W -- · Codex 로그인 필요"
-                : "W -- · Codex 사용량 확인 중";
+                ? "-- · Codex 로그인 필요"
+                : "-- · Codex 사용량 확인 중";
     }
 
     private void RunOnUi(Action action)

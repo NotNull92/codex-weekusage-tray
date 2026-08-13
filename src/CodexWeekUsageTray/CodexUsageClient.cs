@@ -25,7 +25,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
     }
 
     public event EventHandler<QuotaSnapshot?>? WeeklyQuotaChanged;
-    public event Action<bool>? LoginCompleted;
+    public event Action<CodexLoginCompleted>? LoginCompleted;
 
     public static async Task<CodexUsageClient> StartAsync(CancellationToken cancellationToken)
     {
@@ -38,7 +38,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            StandardInputEncoding = Encoding.UTF8,
+            StandardInputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8,
         }) ?? throw new InvalidOperationException("Codex App Server could not be started.");
@@ -54,7 +54,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
                     {
                         name = "codex-weekusage-tray",
                         title = "Codex WeekUsage Tray",
-                        version = "1.0.1",
+                        version = "1.0.3",
                     },
                 },
                 cancellationToken);
@@ -82,7 +82,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
         return CodexAccountStatus.Parse(result);
     }
 
-    public async Task<Uri> StartChatGptLoginAsync(CancellationToken cancellationToken)
+    public async Task<CodexLoginStart> StartChatGptLoginAsync(CancellationToken cancellationToken)
     {
         var result = await SendRequestAsync(
             "account/login/start",
@@ -93,8 +93,11 @@ public sealed class CodexUsageClient : IAsyncDisposable
                 appBrand = "codex",
             },
             cancellationToken);
-        return CodexLoginStart.Parse(result).AuthorizationUrl;
+        return CodexLoginStart.Parse(result);
     }
+
+    public Task CancelChatGptLoginAsync(string loginId, CancellationToken cancellationToken) =>
+        SendRequestAsync("account/login/cancel", new { loginId }, cancellationToken);
 
     public async ValueTask DisposeAsync()
     {
@@ -181,7 +184,11 @@ public sealed class CodexUsageClient : IAsyncDisposable
                     }
                     else
                     {
-                        completion.TrySetException(new InvalidOperationException("Codex usage request failed."));
+                        var error = root.TryGetProperty("error", out var errorProperty)
+                            && errorProperty.TryGetProperty("message", out var errorMessage)
+                                ? errorMessage.GetString()
+                                : null;
+                        completion.TrySetException(new InvalidOperationException(error ?? "Codex usage request failed."));
                     }
 
                     continue;
@@ -199,10 +206,7 @@ public sealed class CodexUsageClient : IAsyncDisposable
                 }
                 else if (method.GetString() == "account/login/completed")
                 {
-                    var succeeded = parameters.TryGetProperty("success", out var success)
-                        && success.ValueKind is JsonValueKind.True or JsonValueKind.False
-                        && success.GetBoolean();
-                    LoginCompleted?.Invoke(succeeded);
+                    LoginCompleted?.Invoke(CodexLoginCompleted.Parse(parameters));
                 }
             }
         }

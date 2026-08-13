@@ -4,4 +4,7 @@ public static class TrayStatus
 {
     public static bool ShouldOfferLogin(QuotaSnapshot? snapshot, bool loginRequired) =>
         loginRequired || snapshot is null;
+
+    public static string DisplayLabel(QuotaSnapshot? snapshot) =>
+        snapshot?.RemainingPercent.ToString() ?? "--";
 }

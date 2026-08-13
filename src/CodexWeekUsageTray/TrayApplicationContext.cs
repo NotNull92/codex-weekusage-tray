@@ -9,6 +9,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     private readonly NotifyIcon _notifyIcon;
     private readonly UsagePopupForm _popup;
     private CodexUsageClient? _client;
+    private Task<bool>? _clientStartup;
     private Icon? _icon;
     private QuotaSnapshot? _snapshot;
     private string? _error;
@@ -58,46 +59,42 @@ public sealed class TrayApplicationContext : ApplicationContext
     private async void StartOnIdle(object? sender, EventArgs e)
     {
         Application.Idle -= StartOnIdle;
-        try
-        {
-            _client = await CodexUsageClient.StartAsync(CancellationToken.None);
-            _client.WeeklyQuotaChanged += WeeklyQuotaChanged;
-            _client.LoginCompleted += LoginCompleted;
-            await RefreshAsync();
-        }
-        catch
-        {
-            UpdateStatus(null, false, "Codex CLI를 실행할 수 없습니다.");
-        }
+        await RefreshAsync();
     }
 
     private async Task RefreshAsync()
     {
-        if (_client is null)
+        if (!await EnsureClientAsync() || _client is not { } client)
         {
             return;
         }
 
         try
         {
-            var account = await _client.ReadAccountAsync(CancellationToken.None);
+            var account = await client.ReadAccountAsync(CancellationToken.None);
             if (!account.CanReadWeeklyQuota)
             {
                 UpdateStatus(null, true, null);
                 return;
             }
 
-            UpdateStatus(await _client.RefreshAsync(CancellationToken.None), false, null);
+            var snapshot = await client.RefreshAsync(CancellationToken.None);
+            UpdateStatus(snapshot, snapshot is null, null);
         }
         catch
         {
-            UpdateStatus(_snapshot, _loginRequired, "Codex 사용량을 가져올 수 없습니다.");
+            UpdateStatus(_snapshot, true, "Codex 사용량을 가져올 수 없습니다.");
         }
     }
 
     private async Task StartLoginAsync()
     {
-        if (_client is null || _loginInProgress)
+        if (_loginInProgress)
+        {
+            return;
+        }
+
+        if (!await EnsureClientAsync() || _client is not { } client)
         {
             return;
         }
@@ -106,7 +103,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         UpdateStatus(_snapshot, true, "브라우저에서 로그인을 시작합니다.");
         try
         {
-            var authorizationUrl = await _client.StartChatGptLoginAsync(CancellationToken.None);
+            var authorizationUrl = await client.StartChatGptLoginAsync(CancellationToken.None);
             Process.Start(new ProcessStartInfo(authorizationUrl.AbsoluteUri) { UseShellExecute = true });
             UpdateStatus(_snapshot, true, "브라우저에서 로그인을 완료하세요.");
         }
@@ -119,6 +116,40 @@ public sealed class TrayApplicationContext : ApplicationContext
 
     private void WeeklyQuotaChanged(object? sender, QuotaSnapshot? snapshot) =>
         RunOnUi(() => UpdateStatus(snapshot, false, null));
+
+    private async Task<bool> EnsureClientAsync()
+    {
+        if (_client is not null)
+        {
+            return true;
+        }
+
+        _clientStartup ??= StartClientAsync();
+        var startup = _clientStartup;
+        var started = await startup;
+        if (!started && ReferenceEquals(_clientStartup, startup))
+        {
+            _clientStartup = null;
+        }
+
+        return started;
+    }
+
+    private async Task<bool> StartClientAsync()
+    {
+        try
+        {
+            _client = await CodexUsageClient.StartAsync(CancellationToken.None);
+            _client.WeeklyQuotaChanged += WeeklyQuotaChanged;
+            _client.LoginCompleted += LoginCompleted;
+            return true;
+        }
+        catch
+        {
+            UpdateStatus(null, true, "Codex CLI를 실행할 수 없습니다.");
+            return false;
+        }
+    }
 
     private void LoginCompleted(bool succeeded) =>
         RunOnUi(async () =>
@@ -156,18 +187,18 @@ public sealed class TrayApplicationContext : ApplicationContext
     private void UpdateStatus(QuotaSnapshot? snapshot, bool loginRequired, string? error)
     {
         _snapshot = snapshot;
-        _loginRequired = loginRequired;
+        _loginRequired = TrayStatus.ShouldOfferLogin(snapshot, loginRequired);
         _error = error;
-        _popup.UpdateSnapshot(snapshot, loginRequired, error);
-        _loginMenu.Enabled = _client is not null && !_loginInProgress;
+        _popup.UpdateSnapshot(snapshot, _loginRequired, error);
+        _loginMenu.Enabled = !_loginInProgress;
 
-        var nextIcon = TrayIconRenderer.Create(snapshot, loginRequired, error is not null && !loginRequired);
+        var nextIcon = TrayIconRenderer.Create(snapshot, _loginRequired, error is not null && !_loginRequired);
         _notifyIcon.Icon = nextIcon;
         _icon?.Dispose();
         _icon = nextIcon;
         _notifyIcon.Text = snapshot is not null
             ? $"W {snapshot.RemainingPercent}% · 7일 잔여"
-            : loginRequired
+            : _loginRequired
                 ? "W -- · Codex 로그인 필요"
                 : "W -- · Codex 사용량 확인 중";
     }

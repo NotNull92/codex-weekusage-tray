@@ -21,16 +21,16 @@ internal static class TrayIconRenderer
 
         using var bitmap = new Bitmap(32, 32);
         using var graphics = Graphics.FromImage(bitmap);
-        using var brush = new SolidBrush(color);
-        using var font = new Font(FontFamily.GenericSansSerif, 16f, FontStyle.Bold, GraphicsUnit.Pixel);
-        using var format = new StringFormat
-        {
-            Alignment = StringAlignment.Center,
-            LineAlignment = StringAlignment.Center,
-        };
+        var label = snapshot is null ? "W --" : $"W{snapshot.RemainingPercent}";
+        using var font = new Font("Segoe UI", label.Length > 3 ? 12f : 14f, FontStyle.Bold, GraphicsUnit.Pixel);
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        graphics.FillEllipse(brush, 2, 2, 28, 28);
-        graphics.DrawString("W", font, Brushes.Black, new RectangleF(0, 0, 32, 32), format);
+        TextRenderer.DrawText(
+            graphics,
+            label,
+            font,
+            new Rectangle(0, 0, 32, 32),
+            color,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
 
         var handle = bitmap.GetHicon();
         try

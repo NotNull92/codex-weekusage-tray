@@ -119,10 +119,11 @@ public sealed class UsagePopupForm : Form
 
     private void UpdateText(bool loginRequired)
     {
-        _loginButton.Visible = loginRequired;
-        _refreshButton.Text = loginRequired ? "다시 확인" : "새로 고침";
+        var shouldOfferLogin = TrayStatus.ShouldOfferLogin(_snapshot, loginRequired);
+        _loginButton.Visible = shouldOfferLogin;
+        _refreshButton.Text = shouldOfferLogin ? "다시 확인" : "새로 고침";
 
-        if (loginRequired)
+        if (shouldOfferLogin)
         {
             _remaining.Text = "Codex 로그인이 필요합니다";
             _used.Text = _error ?? "ChatGPT 계정으로 로그인하세요.";

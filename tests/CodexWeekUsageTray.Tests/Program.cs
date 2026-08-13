@@ -61,6 +61,16 @@ if (CodexLoginStart.Parse(loginStartResponse.RootElement).AuthorizationUrl.Schem
     throw new InvalidOperationException("Login must only open the HTTPS authorization URL from Codex.");
 }
 
+if (!TrayStatus.ShouldOfferLogin(null, loginRequired: false))
+{
+    throw new InvalidOperationException("A missing weekly quota must still offer a Codex login action.");
+}
+
+if (TrayStatus.ShouldOfferLogin(weekly, loginRequired: false))
+{
+    throw new InvalidOperationException("A weekly quota must not show a redundant login action.");
+}
+
 if (QuotaSnapshot.FormatTimeRemaining(new TimeSpan(days: 3, hours: 4, minutes: 5, seconds: 0)) != "3일 4시간 남음")
 {
     throw new InvalidOperationException("The reset countdown must show whole days and hours.");

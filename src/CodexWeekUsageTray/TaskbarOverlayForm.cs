@@ -78,7 +78,7 @@ public sealed class TaskbarOverlayForm : Form
             < 20 => Color.FromArgb(241, 113, 113),
             _ => Color.FromArgb(210, 210, 210),
         };
-        var text = remaining is null ? "7D --" : $"7D {remaining}%";
+        var text = remaining is null ? "W --" : $"W {remaining}%";
         using var font = new Font(FontFamily.GenericSansSerif, 9f, FontStyle.Bold);
         TextRenderer.DrawText(
             e.Graphics,

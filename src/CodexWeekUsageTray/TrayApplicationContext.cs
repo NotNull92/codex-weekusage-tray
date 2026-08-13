@@ -22,12 +22,12 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         _popup = new UsagePopupForm(RefreshAsync, StartLoginAsync);
         _popup.CreateControl();
-        _menu.Items.Add("상태 보기", null, (_, _) => TogglePopup());
-        _menu.Items.Add("새로 고침", null, async (_, _) => await RefreshAsync());
-        _loginMenu = new ToolStripMenuItem("Codex 로그인", null, async (_, _) => await StartLoginAsync());
+        _menu.Items.Add("Show panel", null, (_, _) => TogglePopup());
+        _menu.Items.Add("Refresh", null, async (_, _) => await RefreshAsync());
+        _loginMenu = new ToolStripMenuItem("Sign in to Codex", null, async (_, _) => await StartLoginAsync());
         _menu.Items.Add(_loginMenu);
         _menu.Items.Add(new ToolStripSeparator());
-        _menu.Items.Add("종료", null, (_, _) => ExitThread());
+        _menu.Items.Add("Quit", null, (_, _) => ExitThread());
 
         _notifyIcon = new NotifyIcon
         {
@@ -85,7 +85,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         }
         catch
         {
-            UpdateStatus(_snapshot, true, "Codex 사용량을 가져올 수 없습니다.");
+            UpdateStatus(_snapshot, true, "We could not get your limit.");
         }
     }
 
@@ -111,18 +111,18 @@ public sealed class TrayApplicationContext : ApplicationContext
 
             _pendingLoginId = null;
             _loginInProgress = false;
-            UpdateStatus(_snapshot, true, "브라우저에서 로그인을 시작합니다.");
+            UpdateStatus(_snapshot, true, "Opening your browser...");
             var login = await client.StartChatGptLoginAsync(CancellationToken.None);
             _pendingLoginId = login.LoginId;
             _loginInProgress = true;
             using var browser = Process.Start(new ProcessStartInfo(login.AuthorizationUrl.AbsoluteUri) { UseShellExecute = true })
-                ?? throw new InvalidOperationException("기본 브라우저를 열 수 없습니다.");
-            UpdateStatus(_snapshot, true, "브라우저에서 로그인을 완료하세요.");
+                ?? throw new InvalidOperationException("We could not open your browser.");
+            UpdateStatus(_snapshot, true, "Finish sign-in in your browser.");
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             _loginInProgress = _pendingLoginId is not null;
-            UpdateStatus(_snapshot, true, $"Codex OAuth를 시작할 수 없습니다: {exception.Message}");
+            UpdateStatus(_snapshot, true, "We could not start sign-in.");
         }
         finally
         {
@@ -161,9 +161,9 @@ public sealed class TrayApplicationContext : ApplicationContext
             _client.LoginCompleted += LoginCompleted;
             return true;
         }
-        catch (Exception exception)
+        catch (Exception)
         {
-            UpdateStatus(null, true, $"Codex CLI를 실행할 수 없습니다: {exception.Message}");
+            UpdateStatus(null, true, "Codex is not ready. Check that it is installed.");
             return false;
         }
     }
@@ -186,8 +186,8 @@ public sealed class TrayApplicationContext : ApplicationContext
             else
             {
                 UpdateStatus(_snapshot, true, completion.Error is null
-                    ? "로그인이 완료되지 않았습니다."
-                    : $"로그인이 완료되지 않았습니다: {completion.Error}");
+                    ? "Sign-in did not finish."
+                    : "Sign-in did not finish.");
             }
         });
 
@@ -203,7 +203,7 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         if (_popup.Visible)
         {
-            _popup.Hide();
+            _popup.HidePanel();
             return;
         }
 
@@ -217,17 +217,17 @@ public sealed class TrayApplicationContext : ApplicationContext
         _error = error;
         _popup.UpdateSnapshot(snapshot, _loginRequired, _loginInProgress, error);
         _loginMenu.Enabled = !_loginStarting;
-        _loginMenu.Text = _loginInProgress ? "Codex 로그인 다시 시작" : "Codex 로그인";
+        _loginMenu.Text = _loginInProgress ? "Start sign-in again" : "Sign in to Codex";
 
-        var nextIcon = TrayIconRenderer.Create(snapshot, _loginRequired, error is not null && !_loginRequired);
+        var nextIcon = TrayIconRenderer.Create(snapshot);
         _notifyIcon.Icon = nextIcon;
         _icon?.Dispose();
         _icon = nextIcon;
         _notifyIcon.Text = snapshot is not null
-            ? $"{snapshot.RemainingPercent}% · 7일 잔여"
+            ? $"{snapshot.RemainingPercent}% left this week"
             : _loginRequired
-                ? "-- · Codex 로그인 필요"
-                : "-- · Codex 사용량 확인 중";
+                ? "-- · Sign in to Codex"
+                : "-- · Checking Codex";
     }
 
     private void RunOnUi(Action action)

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Globalization;
 using CodexWeekUsageTray;
 
 using var weeklyResponse = JsonDocument.Parse("""
@@ -106,7 +107,62 @@ if (TrayStatus.DisplayLabel(weekly) != "73")
     throw new InvalidOperationException("A weekly quota must render only its remaining percentage.");
 }
 
-if (QuotaSnapshot.FormatTimeRemaining(new TimeSpan(days: 3, hours: 4, minutes: 5, seconds: 0)) != "3일 4시간 남음")
+if (QuotaSnapshot.FormatTimeRemaining(new TimeSpan(days: 3, hours: 4, minutes: 5, seconds: 0)) != "3d 4h")
 {
-    throw new InvalidOperationException("The reset countdown must show whole days and hours.");
+    throw new InvalidOperationException("The time-left value must not repeat the word left.");
 }
+
+var originalCulture = CultureInfo.CurrentCulture;
+try
+{
+    CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ko-KR");
+    var resetTime = QuotaSnapshot.FormatResetTime(new DateTimeOffset(2026, 8, 16, 12, 30, 0, TimeSpan.Zero));
+    if (!resetTime.Contains("Aug", StringComparison.Ordinal) || resetTime.Contains('\uC6D4') || resetTime.Contains("\uC624\uD6C4", StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException("The reset time must stay in simple English regardless of the Windows language.");
+    }
+}
+finally
+{
+    CultureInfo.CurrentCulture = originalCulture;
+}
+
+using var weeklyTrayIcon = TrayIconRenderer.Create(weekly);
+using var renderedWeeklyIcon = weeklyTrayIcon.ToBitmap();
+var weeklyInkBounds = GetInkBounds(renderedWeeklyIcon);
+if (weeklyInkBounds.Left < 2 || weeklyInkBounds.Right > 30)
+{
+    throw new InvalidOperationException("The 73 tray icon must keep both digits inside the 32px canvas instead of clipping to 7.");
+}
+
+static Rectangle GetInkBounds(Bitmap bitmap)
+{
+    var minX = bitmap.Width;
+    var minY = bitmap.Height;
+    var maxX = -1;
+    var maxY = -1;
+    for (var y = 0; y < bitmap.Height; y++)
+    {
+        for (var x = 0; x < bitmap.Width; x++)
+        {
+            if (!IsInk(bitmap.GetPixel(x, y)))
+            {
+                continue;
+            }
+
+            minX = Math.Min(minX, x);
+            minY = Math.Min(minY, y);
+            maxX = Math.Max(maxX, x);
+            maxY = Math.Max(maxY, y);
+        }
+    }
+
+    if (maxX < 0)
+    {
+        throw new InvalidOperationException("The tray icon must draw visible Codex-blue text.");
+    }
+
+    return Rectangle.FromLTRB(minX, minY, maxX + 1, maxY + 1);
+}
+
+static bool IsInk(Color pixel) => pixel.A > 0 && pixel.B > pixel.R && pixel.B > pixel.G;

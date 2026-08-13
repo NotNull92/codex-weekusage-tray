@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Globalization;
 
 namespace CodexWeekUsageTray;
 
@@ -8,8 +9,11 @@ public sealed record QuotaSnapshot(int UsedPercent, DateTimeOffset ResetsAt)
 
     public static string FormatTimeRemaining(TimeSpan remaining) =>
         remaining <= TimeSpan.Zero
-            ? "초기화 중"
-            : $"{remaining.Days}일 {remaining.Hours}시간 남음";
+            ? "Resetting"
+            : $"{remaining.Days}d {remaining.Hours}h";
+
+    public static string FormatResetTime(DateTimeOffset resetsAt) =>
+        resetsAt.ToLocalTime().ToString("MMM d, h:mm tt", CultureInfo.InvariantCulture);
 
     public static void RunSelfCheck()
     {

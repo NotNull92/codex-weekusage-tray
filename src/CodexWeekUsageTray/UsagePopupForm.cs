@@ -1,15 +1,20 @@
+using System.Drawing.Drawing2D;
+
 namespace CodexWeekUsageTray;
 
 public sealed class UsagePopupForm : Form
 {
     private readonly Func<Task> _refresh;
     private readonly Func<Task> _login;
+    private readonly Label _product = new();
+    private readonly Label _title = new();
     private readonly Label _remaining = new();
     private readonly Label _used = new();
     private readonly Label _reset = new();
     private readonly Label _countdown = new();
     private readonly Button _refreshButton = new();
     private readonly Button _loginButton = new();
+    private readonly Button _closeButton = new();
     private readonly System.Windows.Forms.Timer _countdownTimer = new() { Interval = 1_000 };
     private QuotaSnapshot? _snapshot;
     private string? _error;
@@ -19,34 +24,46 @@ public sealed class UsagePopupForm : Form
         _refresh = refresh;
         _login = login;
         AutoScaleMode = AutoScaleMode.Dpi;
-        BackColor = Color.FromArgb(36, 36, 36);
-        ClientSize = new Size(244, 154);
+        BackColor = CodexTheme.Surface;
+        ClientSize = new Size(368, 282);
+        DoubleBuffered = true;
         FormBorderStyle = FormBorderStyle.None;
-        ForeColor = Color.White;
+        ForeColor = CodexTheme.Text;
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.Manual;
+        Text = "Codex weekly limit";
         TopMost = true;
 
-        ConfigureLabel(_remaining, new Point(14, 12), new Size(216, 22), FontStyle.Bold);
-        ConfigureLabel(_used, new Point(14, 38), new Size(216, 20), FontStyle.Regular);
-        ConfigureLabel(_reset, new Point(14, 62), new Size(216, 20), FontStyle.Regular);
-        ConfigureLabel(_countdown, new Point(14, 86), new Size(216, 20), FontStyle.Regular);
-        _loginButton.Location = new Point(14, 120);
-        _loginButton.Size = new Size(126, 24);
-        _loginButton.Text = "로그인";
-        _loginButton.ForeColor = SystemColors.ControlText;
-        _loginButton.UseVisualStyleBackColor = true;
-        _loginButton.Click += LoginButtonClicked;
-        _refreshButton.Location = new Point(150, 120);
-        _refreshButton.Size = new Size(80, 24);
-        _refreshButton.Text = "새로 고침";
-        _refreshButton.ForeColor = SystemColors.ControlText;
-        _refreshButton.UseVisualStyleBackColor = true;
-        _refreshButton.Click += RefreshButtonClicked;
+        ConfigureLabel(_product, new Point(16, 16), new Size(336, 20), 13f, FontStyle.Bold, CodexTheme.GlowStart);
+        _product.Text = "CODEX";
+        ConfigureLabel(_title, new Point(16, 42), new Size(336, 18), 11f, FontStyle.Bold, CodexTheme.TextDim);
+        _title.Text = "WEEKLY LIMIT";
+        ConfigureLabel(_remaining, new Point(16, 68), new Size(336, 52), 32f, FontStyle.Bold, CodexTheme.Text);
+        ConfigureLabel(_used, new Point(16, 132), new Size(336, 22), 11f, FontStyle.Regular, CodexTheme.TextMuted);
+        ConfigureLabel(_reset, new Point(16, 156), new Size(336, 22), 11f, FontStyle.Regular, CodexTheme.TextMuted);
+        ConfigureLabel(_countdown, new Point(16, 180), new Size(336, 22), 11f, FontStyle.Bold, CodexTheme.GlowStart);
 
-        Controls.AddRange([_remaining, _used, _reset, _countdown, _loginButton, _refreshButton]);
+        ConfigureButton(_loginButton, "Sign in", primary: true);
+        _loginButton.Click += LoginButtonClicked;
+        ConfigureButton(_refreshButton, "Refresh", primary: false);
+        _refreshButton.Click += RefreshButtonClicked;
+        ConfigureButton(_closeButton, "Close", primary: false);
+        _closeButton.AccessibleName = "Close panel";
+        _closeButton.Click += (_, _) => HidePanel();
+
+        Controls.AddRange([
+            _product,
+            _title,
+            _remaining,
+            _used,
+            _reset,
+            _countdown,
+            _loginButton,
+            _refreshButton,
+            _closeButton,
+        ]);
         _countdownTimer.Tick += (_, _) => UpdateCountdown();
     }
 
@@ -66,6 +83,12 @@ public sealed class UsagePopupForm : Form
         _countdownTimer.Start();
     }
 
+    public void HidePanel()
+    {
+        Hide();
+        _countdownTimer.Stop();
+    }
+
     public void UpdateSnapshot(QuotaSnapshot? snapshot, bool loginRequired, bool loginInProgress, string? error)
     {
         _snapshot = snapshot;
@@ -83,12 +106,70 @@ public sealed class UsagePopupForm : Form
         base.Dispose(disposing);
     }
 
-    private static void ConfigureLabel(Label label, Point location, Size size, FontStyle style)
+    protected override void OnPaintBackground(PaintEventArgs e)
     {
-        label.Font = new Font(FontFamily.GenericSansSerif, 9f, style);
-        label.ForeColor = Color.White;
+        e.Graphics.Clear(CodexTheme.Surface);
+        using var background = new LinearGradientBrush(
+            ClientRectangle,
+            CodexTheme.Surface,
+            CodexTheme.SurfaceRaised,
+            LinearGradientMode.ForwardDiagonal);
+        e.Graphics.FillRectangle(background, ClientRectangle);
+        DrawGlow(e.Graphics, new Rectangle(182, -72, 240, 184), CodexTheme.GlowStart);
+        DrawGlow(e.Graphics, new Rectangle(-92, 136, 220, 172), CodexTheme.GlowEnd);
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        using var outerGlow = new Pen(Color.FromArgb(72, CodexTheme.GlowMiddle), 3f);
+        using var frame = new Pen(Color.FromArgb(220, CodexTheme.GlowStart));
+        e.Graphics.DrawRectangle(outerGlow, 2, 2, Width - 5, Height - 5);
+        e.Graphics.DrawRectangle(frame, 5, 5, Width - 11, Height - 11);
+        using var corner = new Pen(CodexTheme.GlowEnd, 2f);
+        e.Graphics.DrawLine(corner, 6, 24, 6, 6);
+        e.Graphics.DrawLine(corner, 6, 6, 24, 6);
+        e.Graphics.DrawLine(corner, Width - 25, Height - 6, Width - 7, Height - 6);
+        e.Graphics.DrawLine(corner, Width - 7, Height - 24, Width - 7, Height - 6);
+    }
+
+    private static void ConfigureLabel(Label label, Point location, Size size, float fontSize, FontStyle style, Color foreColor)
+    {
+        label.AutoEllipsis = true;
+        label.BackColor = Color.Transparent;
+        label.Font = CodexTheme.Mono(fontSize, style);
+        label.ForeColor = foreColor;
         label.Location = location;
         label.Size = size;
+    }
+
+    private static void ConfigureButton(Button button, string text, bool primary)
+    {
+        button.BackColor = primary ? CodexTheme.GlowEnd : CodexTheme.SurfaceRaised;
+        button.Cursor = Cursors.Hand;
+        button.FlatAppearance.BorderColor = primary ? CodexTheme.GlowStart : CodexTheme.GlowMiddle;
+        button.FlatAppearance.BorderSize = 1;
+        button.FlatAppearance.MouseDownBackColor = primary ? CodexTheme.GlowMiddle : CodexTheme.Surface;
+        button.FlatAppearance.MouseOverBackColor = primary ? CodexTheme.GlowMiddle : Color.FromArgb(42, 49, 111);
+        button.FlatStyle = FlatStyle.Flat;
+        button.Font = CodexTheme.Mono(11f, FontStyle.Bold);
+        button.ForeColor = CodexTheme.Text;
+        button.Size = new Size(100, 36);
+        button.Text = text;
+        button.UseVisualStyleBackColor = false;
+    }
+
+    private static void DrawGlow(Graphics graphics, Rectangle bounds, Color color)
+    {
+        using var path = new GraphicsPath();
+        path.AddEllipse(bounds);
+        using var brush = new PathGradientBrush(path)
+        {
+            CenterColor = Color.FromArgb(58, color),
+            SurroundColors = [Color.FromArgb(0, color)],
+        };
+        graphics.FillPath(brush, path);
     }
 
     private async void RefreshButtonClicked(object? sender, EventArgs e)
@@ -121,37 +202,61 @@ public sealed class UsagePopupForm : Form
     {
         var shouldOfferLogin = TrayStatus.ShouldOfferLogin(_snapshot, loginRequired);
         _loginButton.Visible = shouldOfferLogin;
-        _loginButton.Text = loginInProgress ? "로그인 다시 시작" : "로그인";
-        _refreshButton.Text = shouldOfferLogin ? "다시 확인" : "새로 고침";
+        _loginButton.Text = loginInProgress ? "Start again" : "Sign in";
+        _refreshButton.Text = shouldOfferLogin ? "Check" : "Refresh";
+        LayoutActions(shouldOfferLogin);
 
+        _used.ForeColor = _error is null ? CodexTheme.TextMuted : CodexTheme.Error;
         if (shouldOfferLogin)
         {
-            _remaining.Text = "Codex 로그인이 필요합니다";
-            _used.Text = _error ?? "ChatGPT 계정으로 로그인하세요.";
-            _reset.Text = "로그인 후 7일 제한을 표시합니다.";
+            _remaining.Text = "SIGN IN TO CODEX";
+            _remaining.ForeColor = CodexTheme.GlowStart;
+            _used.Text = _error ?? "Open your browser to sign in.";
+            _reset.Text = "Then see your weekly limit here.";
             _countdown.Text = string.Empty;
             return;
         }
 
         if (_snapshot is null)
         {
-            _remaining.Text = "7일 제한 정보를 찾지 못했습니다";
-            _used.Text = _error ?? "Codex 로그인과 제한 정보를 확인하세요.";
+            _remaining.Text = "NO WEEKLY LIMIT";
+            _remaining.ForeColor = CodexTheme.GlowStart;
+            _used.Text = _error ?? "Sign in to Codex or check again.";
             _reset.Text = string.Empty;
             _countdown.Text = string.Empty;
             return;
         }
 
-        _remaining.Text = $"7일 잔여 {_snapshot.RemainingPercent}%";
-        _used.Text = $"사용 {_snapshot.UsedPercent}%";
-        _reset.Text = $"초기화: {_snapshot.ResetsAt.ToLocalTime():yyyy-MM-dd HH:mm}";
+        _remaining.Text = $"{_snapshot.RemainingPercent}% LEFT";
+        _remaining.ForeColor = CodexTheme.GlowStart;
+        _used.Text = $"Used: {_snapshot.UsedPercent}%";
+        _reset.Text = $"Resets: {QuotaSnapshot.FormatResetTime(_snapshot.ResetsAt)}";
         UpdateCountdown();
+    }
+
+    private void LayoutActions(bool shouldOfferLogin)
+    {
+        if (shouldOfferLogin)
+        {
+            _loginButton.Location = new Point(16, 230);
+            _loginButton.Size = new Size(110, 36);
+            _refreshButton.Location = new Point(134, 230);
+            _refreshButton.Size = new Size(96, 36);
+            _closeButton.Location = new Point(238, 230);
+            _closeButton.Size = new Size(114, 36);
+            return;
+        }
+
+        _refreshButton.Location = new Point(16, 230);
+        _refreshButton.Size = new Size(214, 36);
+        _closeButton.Location = new Point(238, 230);
+        _closeButton.Size = new Size(114, 36);
     }
 
     private void UpdateCountdown()
     {
         _countdown.Text = _snapshot is null
             ? string.Empty
-            : QuotaSnapshot.FormatTimeRemaining(_snapshot.ResetsAt - DateTimeOffset.Now);
+            : $"Time left: {QuotaSnapshot.FormatTimeRemaining(_snapshot.ResetsAt - DateTimeOffset.Now)}";
     }
 }

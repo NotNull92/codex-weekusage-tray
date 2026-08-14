@@ -187,18 +187,16 @@ void CodexClient::Stop() {
     stopping_ = true;
     awaiting_initialization_ = false;
 
-    if (stdin_write_ != nullptr) {
-        CloseHandle(stdin_write_);
-        stdin_write_ = nullptr;
+    {
+        std::lock_guard lock(write_mutex_);
+        if (stdin_write_ != nullptr) {
+            CloseHandle(stdin_write_);
+            stdin_write_ = nullptr;
+        }
     }
-    if (stdout_read_ != nullptr) {
-        CancelIoEx(stdout_read_, nullptr);
-        CloseHandle(stdout_read_);
-        stdout_read_ = nullptr;
-    }
-    if (reader_.joinable()) {
-        reader_.join();
-    }
+    if (stdout_read_ != nullptr) CancelIoEx(stdout_read_, nullptr);
+    if (reader_.joinable()) reader_.join();
+    if (stdout_read_ != nullptr) { CloseHandle(stdout_read_); stdout_read_ = nullptr; }
     if (process_ != nullptr) {
         if (WaitForSingleObject(process_, 0) == WAIT_TIMEOUT) {
             TerminateProcess(process_, 0);
@@ -239,11 +237,12 @@ bool CodexClient::Write(std::string_view line) {
 }
 
 void CodexClient::ReadLoop() {
+    const HANDLE stdout_read = stdout_read_;
     std::array<char, 4096> bytes{};
     std::string pending;
     while (!stopping_) {
         DWORD read{};
-        if (!ReadFile(stdout_read_, bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr) || read == 0) {
+        if (!ReadFile(stdout_read, bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr) || read == 0) {
             if (!stopping_) {
                 Post(Event(CodexEventKind::Error));
             }

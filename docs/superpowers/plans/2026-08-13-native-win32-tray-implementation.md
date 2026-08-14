@@ -685,8 +685,8 @@ git push origin feat/native-win32
 Then fast-forward `main` only after confirming its worktree is clean and still at the reviewed base, and create the release from that exact `main` commit:
 
 ```bash
-git -C C:/Users/PC/Desktop/Cowork/codex-weekusage-tray merge --ff-only feat/native-win32
-git -C C:/Users/PC/Desktop/Cowork/codex-weekusage-tray push origin main
+git -C <workspace> merge --ff-only feat/native-win32
+git -C <workspace> push origin main
 gh release create v2.0.0 artifacts/CodexWeekUsageTray-win-x64-v2.0.0.zip artifacts/SHA256SUMS-v2.0.0.txt --target main --title "v2.0.0" --notes "Native Win32 rewrite: no .NET runtime required. Verify SHA-256 before running. The EXE is not Authenticode-signed yet."
 ```
 

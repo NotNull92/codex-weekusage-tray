@@ -12,6 +12,14 @@ Codex の週間利用上限を Windows の通知領域（システムトレイ�
 
 トレイアイコンには `73` のような大きな太字の数字が表示されます。上限の情報をまだ取得できていない場合は `--` が表示されます。アイコンをクリックすると Codex パネルが開きます。パネルには残量、リセット時刻、残り時間が表示されます。
 
+<p align="center">
+  <img src="docs/screenshot/tray.png" width="220" alt="Windows のシステムトレイに数字 39 が表示されたアイコン"><br>
+  <sub><em>トレイアイコン</em></sub>
+  <br><br>
+  <img src="docs/screenshot/panel.png" width="320" alt="残り 39%、使用量、リセット日、残り時間を表示する詳細パネル"><br>
+  <sub><em>詳細パネル</em></sub>
+</p>
+
 ## 必要なもの
 
 - x64 版の Windows 10 または Windows 11

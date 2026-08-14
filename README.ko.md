@@ -12,6 +12,14 @@ Codex 주간 사용 한도를 Windows 시스템 트레이에 표시하는 작은
 
 트레이 아이콘에는 `73` 같은 큰 굵은 숫자가 표시되며, 한도 정보를 아직 받지 못했을 때는 `--`가 표시됩니다. 아이콘을 클릭하면 Codex 패널이 열립니다. 패널에는 남은 양, 초기화 시각, 남은 시간이 표시됩니다.
 
+<p align="center">
+  <img src="docs/screenshot/tray.png" width="220" alt="Windows 시스템 트레이에 숫자 39가 표시된 아이콘"><br>
+  <sub><em>트레이 아이콘</em></sub>
+  <br><br>
+  <img src="docs/screenshot/panel.png" width="320" alt="39% 남음, 사용량, 초기화 날짜, 남은 시간을 보여주는 상세 패널"><br>
+  <sub><em>상세 패널</em></sub>
+</p>
+
 ## 준비물
 
 - x64 기반 Windows 10 또는 Windows 11

@@ -12,6 +12,14 @@
 
 托盘图标会显示一个粗体大数字，例如 `73`；在尚未获取到上限信息时显示 `--`。点击图标可打开 Codex 面板，面板中会显示剩余量、重置时间和剩余时长。
 
+<p align="center">
+  <img src="docs/screenshot/tray.png" width="220" alt="Windows 系统托盘中显示数字 39 的图标"><br>
+  <sub><em>托盘图标</em></sub>
+  <br><br>
+  <img src="docs/screenshot/panel.png" width="320" alt="显示剩余 39%、用量、重置日期和剩余时长的详情面板"><br>
+  <sub><em>详情面板</em></sub>
+</p>
+
 ## 环境要求
 
 - x64 架构的 Windows 10 或 Windows 11

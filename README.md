@@ -12,6 +12,14 @@ A small native Windows app that shows your Codex weekly limit in the system tray
 
 The tray icon shows a large bold number such as `73`, or `--` while the limit is not ready. Click it to open the Codex panel. The panel shows what is left, when it resets, and the time left.
 
+<p align="center">
+  <img src="docs/screenshot/tray.png" width="220" alt="Tray icon showing the number 39 in the Windows system tray"><br>
+  <sub><em>Tray icon</em></sub>
+  <br><br>
+  <img src="docs/screenshot/panel.png" width="320" alt="Detail panel showing 39% left, usage, reset date, and time left"><br>
+  <sub><em>Detail panel</em></sub>
+</p>
+
 ## What you need
 
 - Windows 10 or Windows 11 on x64

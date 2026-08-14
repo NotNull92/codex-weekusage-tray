@@ -1,5 +1,6 @@
 #include "../src/core.h"
 #include "../src/codex_client.h"
+#include "../src/main.h"
 #include "fixtures.h"
 
 #include <filesystem>
@@ -42,6 +43,11 @@ int wmain() {
     Expect(BuildLoginRequest(7).find("\"type\":\"chatgpt\"") != std::string::npos, "Client must request managed ChatGPT login.");
     Expect(ParseServerLine(kRateLimitUpdated).kind == CodexEventKind::RateLimitUpdated, "Rate-limit event must be recognized.");
     Expect(ParseServerLine(kLoginCompleted).kind == CodexEventKind::LoginCompleted, "Login completion must be recognized.");
+
+    const auto number_ink = MeasureTrayInk(73);
+    Expect(number_ink.left >= 1 && number_ink.right <= 31, "Tray number must fit inside the icon.");
+    Expect(number_ink.width >= 20, "Tray number must render both digits rather than only 7.");
+    Expect(MeasureTrayInk(std::nullopt).width >= 12, "Pending state must render two dashes.");
 
     return 0;
 }

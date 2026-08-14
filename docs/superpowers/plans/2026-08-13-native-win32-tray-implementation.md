@@ -285,7 +285,7 @@ git commit -m "feat: add native Codex app server client"
 - Tray callback message `WM_APP_TRAY = WM_APP + 40` supports left-click toggle and context menu.
 - `HICON CreateTrayIcon(std::optional<QuotaSnapshot>)` draws `--` or the complete decimal percentage centered in 32×32 pixels.
 
-- [ ] **Step 1: Write the failing tray-icon geometry test**
+- [x] **Step 1: Write the failing tray-icon geometry test**
 
 Add a testable bitmap-render function and assert that both characters of `73` have visible non-transparent ink inside the 32×32 canvas:
 
@@ -296,7 +296,7 @@ Expect(bounds.width >= 20, "Tray number must render both digits rather than only
 Expect(MeasureInkBounds(RenderTrayBitmap(std::nullopt)).width >= 12, "Pending state must render two dashes.");
 ```
 
-- [ ] **Step 2: Run the test to verify it fails for the missing renderer**
+- [x] **Step 2: Run the test to verify it fails for the missing renderer**
 
 Run:
 
@@ -307,7 +307,7 @@ native\out\CodexWeekUsageTrayTests.exe
 
 Expected: compile failure for the native renderer API.
 
-- [ ] **Step 3: Implement the shell and renderer with Win32 ownership**
+- [x] **Step 3: Implement the shell and renderer with Win32 ownership**
 
 Implement one hidden top-level owner window and one `NOTIFYICONDATAW` record with `NIF_ICON | NIF_MESSAGE | NIF_TIP`. Render transparent 32×32 ARGB DIBs via GDI+, choose the largest fitted bold `Cascadia Mono` or `Segoe UI` font, and fill text with `#95A2FF` to `#4A59FE`. Replace the icon only when the label changes; destroy the previous `HICON` after `Shell_NotifyIconW(NIM_MODIFY, ...)` has accepted the new one.
 
@@ -323,7 +323,7 @@ Quit
 
 On `WM_LBUTTONUP` / `NIN_SELECT`, toggle the panel. On `WM_RBUTTONUP`, use `SetForegroundWindow` then `TrackPopupMenu` so standard Windows tray behavior remains intact. The hidden owner is the only long-lived top-level window; it never occupies taskbar space.
 
-- [ ] **Step 4: Build and manually verify the native notification icon**
+- [x] **Step 4: Build and manually verify the native notification icon**
 
 Run:
 
@@ -334,7 +334,7 @@ native\out\CodexWeekUsageTray.exe
 
 Expected: a normal notification-area icon is visible or present in Windows overflow, does not cover the clock, shows `--` initially, and right-click displays all four commands. Close through **Quit** before the next task.
 
-- [ ] **Step 5: Commit the tray shell**
+- [x] **Step 5: Commit the tray shell**
 
 ```bash
 git add native/src/main.cpp native/build.cmd native/tests/native_tests.cpp

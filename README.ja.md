@@ -46,6 +46,16 @@ native\out\CodexWeekUsageTray.exe
 
 アイコンは通常の Windows システムトレイに表示されます。時計や日付を覆うことはありません。
 
+### 初回起動時の SmartScreen 警告
+
+リリースの EXE はまだ Authenticode 署名されていないため、初回起動時に **Windows によって PC が保護されました** という警告が表示されます。信頼する前にファイルを確認してください。
+
+```powershell
+Get-FileHash .\CodexWeekUsageTray.exe -Algorithm SHA256
+```
+
+結果を、同じリリースの `SHA256SUMS` ファイル内の該当する行と照合します。値が一致したら **詳細情報 > 実行** を選択してください。署名されていない実行ファイルをそもそも実行したくない場合は、上の手順でソースからビルドしてください。
+
 ### トレイアイコンを表示する
 
 1. `CodexWeekUsageTray.exe` を実行します。

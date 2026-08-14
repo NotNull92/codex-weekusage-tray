@@ -46,6 +46,16 @@ native\out\CodexWeekUsageTray.exe
 
 图标位于常规的 Windows 系统托盘中，不会遮挡时钟或日期。
 
+### 首次运行会出现 SmartScreen 警告
+
+发行版 EXE 尚未进行 Authenticode 签名，因此首次运行时会出现 **Windows 已保护你的电脑** 提示。信任该文件之前请先校验：
+
+```powershell
+Get-FileHash .\CodexWeekUsageTray.exe -Algorithm SHA256
+```
+
+把结果与同一版本 `SHA256SUMS` 文件中对应的一行进行比对。如果一致，选择 **更多信息 > 仍要运行**。如果你完全不想运行未签名的可执行文件，请按上面的步骤从源码构建。
+
 ### 让托盘图标可见
 
 1. 运行 `CodexWeekUsageTray.exe`。

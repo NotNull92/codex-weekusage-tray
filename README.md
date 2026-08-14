@@ -46,6 +46,16 @@ native\out\CodexWeekUsageTray.exe
 
 The icon belongs to the normal Windows system tray. It never covers the clock or date.
 
+### First run shows a SmartScreen warning
+
+Release EXEs are not Authenticode-signed yet, so the first run shows **Windows protected your PC**. Check the file before you trust it:
+
+```powershell
+Get-FileHash .\CodexWeekUsageTray.exe -Algorithm SHA256
+```
+
+Compare the result with the matching line in the `SHA256SUMS` file from the same release. If the values match, choose **More info > Run anyway**. If you would rather not run an unsigned binary at all, build from source with the steps above.
+
 ### Make the tray icon visible
 
 1. Run `CodexWeekUsageTray.exe`.

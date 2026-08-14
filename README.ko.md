@@ -46,6 +46,16 @@ native\out\CodexWeekUsageTray.exe
 
 아이콘은 일반적인 Windows 시스템 트레이에 표시됩니다. 시계나 날짜를 가리지 않습니다.
 
+### 첫 실행 시 SmartScreen 경고
+
+릴리스 EXE는 아직 Authenticode 서명이 되어 있지 않아, 처음 실행하면 **Windows의 PC 보호** 경고가 표시됩니다. 신뢰하기 전에 파일을 확인하세요.
+
+```powershell
+Get-FileHash .\CodexWeekUsageTray.exe -Algorithm SHA256
+```
+
+결과값을 같은 릴리스의 `SHA256SUMS` 파일에 있는 해당 줄과 비교하세요. 값이 일치하면 **추가 정보 > 실행**을 선택합니다. 서명되지 않은 실행 파일을 아예 실행하고 싶지 않다면, 위의 방법으로 소스에서 직접 빌드하세요.
+
 ### 트레이 아이콘 표시하기
 
 1. `CodexWeekUsageTray.exe`를 실행합니다.

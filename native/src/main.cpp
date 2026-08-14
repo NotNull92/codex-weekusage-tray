@@ -77,6 +77,7 @@ AppState ApplyEvent(AppState state, const CodexEvent& event) {
             }
             break;
         case CodexEventKind::Error:
+        case CodexEventKind::Disconnected:
             state.login_in_progress = false;
             state.safe_error = L"Could not check Codex.";
             state.refresh_finished = true;

@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 #include <windows.h>
 
 namespace CodexTray {
@@ -19,7 +20,8 @@ enum class CodexEventKind {
     RateLimitUpdated,
     LoginStarted,
     LoginCompleted,
-    Error
+    Error,
+    Disconnected
 };
 
 struct CodexEvent {
@@ -44,10 +46,11 @@ public:
 
     bool Start(HWND receiver);
     void Stop();
-    void RequestAccount();
-    void RequestRateLimits();
+    bool RequestAccount();
+    bool RequestRateLimits();
     bool StartChatGptLogin();
     void CancelLogin(std::string_view login_id);
+    std::vector<CodexEvent> TakeEvents();
 
 private:
     bool Write(std::string_view line);
@@ -62,6 +65,8 @@ private:
     std::atomic_bool awaiting_initialization_{};
     std::atomic_uint next_id_{1};
     std::mutex write_mutex_;
+    std::mutex events_mutex_;
+    std::vector<CodexEvent> events_;
     std::thread reader_;
 };
 

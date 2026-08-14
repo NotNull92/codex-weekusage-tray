@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <array>
 #include <ctime>
-#include <memory>
 #include <shellapi.h>
 #include <string>
 
@@ -85,8 +84,7 @@ private:
             return 0;
         }
         if (message == CodexTray::WM_APP_CODEX_EVENT) {
-            std::unique_ptr<CodexTray::CodexEvent> event(reinterpret_cast<CodexTray::CodexEvent*>(lparam));
-            HandleCodexEvent(*event);
+            for (const auto& event : client_.TakeEvents()) HandleCodexEvent(event);
             return 0;
         }
         if (message == WM_TIMER && wparam == TIMER_REFRESH) { RefreshNow(); return 0; }
@@ -97,7 +95,6 @@ private:
         if (message == WM_DESTROY) {
             KillTimer(owner_, TIMER_REFRESH);
             client_.Stop();
-            DrainCodexEvents();
             popup_.Destroy();
             if (tray_added_) {
                 Shell_NotifyIconW(NIM_DELETE, &tray_);
@@ -128,7 +125,8 @@ private:
 
     void RefreshNow() {
         if (preview_mode_ || refresh_pending_ || !EnsureClient()) return;
-        refresh_pending_ = true; client_.RequestAccount();
+        refresh_pending_ = true;
+        if (!client_.RequestAccount()) HandleCodexEvent({CodexTray::CodexEventKind::Disconnected, {}, {}, std::nullopt, false});
     }
 
     void StartLogin() {
@@ -137,22 +135,26 @@ private:
             client_.CancelLogin(state_.pending_login_id); state_.pending_login_id.clear();
         }
         state_.safe_error.clear();
-        if (!client_.StartChatGptLogin()) { state_.safe_error = L"Could not start sign in."; popup_.Update(state_); return; }
+        if (!client_.StartChatGptLogin()) { HandleCodexEvent({CodexTray::CodexEventKind::Disconnected, {}, {}, std::nullopt, false}); return; }
         login_start_pending_ = true;
         popup_.Update(state_);
     }
 
     void HandleCodexEvent(const CodexTray::CodexEvent& event) {
-        if (event.kind == CodexTray::CodexEventKind::LoginStarted || event.kind == CodexTray::CodexEventKind::Error) login_start_pending_ = false;
+        if (event.kind == CodexTray::CodexEventKind::Disconnected) { client_.Stop(); client_running_ = false; }
+        if (event.kind == CodexTray::CodexEventKind::LoginStarted || event.kind == CodexTray::CodexEventKind::Error || event.kind == CodexTray::CodexEventKind::Disconnected) login_start_pending_ = false;
         state_ = CodexTray::ApplyEvent(std::move(state_), event);
-        if (event.kind == CodexTray::CodexEventKind::Account && event.success) client_.RequestRateLimits();
+        if (event.kind == CodexTray::CodexEventKind::Account && event.success && !client_.RequestRateLimits()) { HandleCodexEvent({CodexTray::CodexEventKind::Disconnected, {}, {}, std::nullopt, false}); return; }
         if (state_.refresh_finished) refresh_pending_ = false;
-        if (event.kind == CodexTray::CodexEventKind::LoginStarted) {
+        if (event.kind == CodexTray::CodexEventKind::LoginStarted && CodexTray::IsOfficialLoginUrl(event.authorization_url)) {
             const auto result = reinterpret_cast<INT_PTR>(ShellExecuteW(owner_, L"open", event.authorization_url.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
             if (result <= 32) {
                 state_.login_in_progress = false;
                 state_.safe_error = L"Could not open your browser.";
             }
+        } else if (event.kind == CodexTray::CodexEventKind::LoginStarted) {
+            state_.login_in_progress = false;
+            state_.safe_error = L"Could not start sign in.";
         }
         if (state_.next_request == CodexTray::RequestKind::Account) {
             RefreshNow();
@@ -240,13 +242,6 @@ private:
         SetForegroundWindow(owner_);
         TrackPopupMenu(menu, TPM_RIGHTBUTTON, point.x, point.y, 0, owner_, nullptr);
         DestroyMenu(menu);
-    }
-
-    void DrainCodexEvents() {
-        MSG message{};
-        while (PeekMessageW(&message, owner_, CodexTray::WM_APP_CODEX_EVENT, CodexTray::WM_APP_CODEX_EVENT, PM_REMOVE)) {
-            delete reinterpret_cast<CodexTray::CodexEvent*>(message.lParam);
-        }
     }
 
     HINSTANCE instance_{};

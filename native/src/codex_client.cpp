@@ -7,6 +7,7 @@
 #include <array>
 #include <filesystem>
 #include <shlobj.h>
+#include <utility>
 
 namespace {
 
@@ -205,15 +206,17 @@ void CodexClient::Stop() {
         CloseHandle(process_);
         process_ = nullptr;
     }
+    std::lock_guard events_lock(events_mutex_);
+    events_.clear();
     receiver_ = nullptr;
 }
 
-void CodexClient::RequestAccount() {
-    Write(BuildAccountRequest(next_id_++));
+bool CodexClient::RequestAccount() {
+    return Write(BuildAccountRequest(next_id_++));
 }
 
-void CodexClient::RequestRateLimits() {
-    Write(BuildRateLimitsRequest(next_id_++));
+bool CodexClient::RequestRateLimits() {
+    return Write(BuildRateLimitsRequest(next_id_++));
 }
 
 bool CodexClient::StartChatGptLogin() {
@@ -244,7 +247,7 @@ void CodexClient::ReadLoop() {
         DWORD read{};
         if (!ReadFile(stdout_read, bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr) || read == 0) {
             if (!stopping_) {
-                Post(Event(CodexEventKind::Error));
+                Post(Event(CodexEventKind::Disconnected));
             }
             return;
         }
@@ -258,7 +261,7 @@ void CodexClient::ReadLoop() {
                 line.pop_back();
             }
             if (line.size() > 1024 * 1024) {
-                Post(Event(CodexEventKind::Error));
+                Post(Event(CodexEventKind::Disconnected));
                 return;
             }
             CodexEvent event = ParseServerLine(line);
@@ -271,7 +274,7 @@ void CodexClient::ReadLoop() {
         }
 
         if (pending.size() > 1024 * 1024) {
-            Post(Event(CodexEventKind::Error));
+            Post(Event(CodexEventKind::Disconnected));
             return;
         }
     }
@@ -282,10 +285,14 @@ void CodexClient::Post(CodexEvent event) {
         return;
     }
 
-    auto* owned_event = new CodexEvent(std::move(event));
-    if (!PostMessageW(receiver_, WM_APP_CODEX_EVENT, 0, reinterpret_cast<LPARAM>(owned_event))) {
-        delete owned_event;
-    }
+    std::lock_guard lock(events_mutex_);
+    events_.push_back(std::move(event));
+    PostMessageW(receiver_, WM_APP_CODEX_EVENT, 0, 0);
+}
+
+std::vector<CodexEvent> CodexClient::TakeEvents() {
+    std::lock_guard lock(events_mutex_);
+    return std::exchange(events_, {});
 }
 
 }

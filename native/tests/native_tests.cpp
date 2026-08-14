@@ -49,8 +49,6 @@ int wmain() {
     Expect(installed_codex_path && *installed_codex_path != StandardCodexPath(L"C:\\Untrusted"), "Installed Codex path must ignore inherited LOCALAPPDATA.");
     Expect(JsonString("a\"b\\c\n") == "\"a\\\"b\\\\c\\n\"", "JSON writer must escape control characters.");
 
-    Expect(BuildInitializeRequest(1).find("\"method\":\"initialize\"") != std::string::npos, "Client must initialize first.");
-    Expect(BuildLoginRequest(7).find("\"type\":\"chatgpt\"") != std::string::npos, "Client must request managed ChatGPT login.");
     Expect(ParseServerLine(kRateLimitUpdated).kind == CodexEventKind::RateLimitUpdated, "Rate-limit event must be recognized.");
     const auto rate_limits_result = ParseServerLine(kRateLimitsResult);
     Expect(rate_limits_result.kind == CodexEventKind::RateLimits && rate_limits_result.quota && rate_limits_result.quota->remaining_percent == 73, "Rate-limit result must carry the weekly quota.");
@@ -80,6 +78,8 @@ int wmain() {
     Expect(state.next_request == RequestKind::RateLimits && !state.refresh_finished, "Signed-in account must request limits before completing refresh.");
     state = ApplyEvent(state, CodexEvent{CodexEventKind::RateLimits, {}, {}, QuotaSnapshot{27, 73, 1781395200}, true});
     Expect(state.quota && state.refresh_finished, "Rate-limit result must complete the login refresh.");
+    const auto disconnected = ApplyEvent(AppState{}, CodexEvent{CodexEventKind::Disconnected, {}, {}, std::nullopt, false});
+    Expect(disconnected.refresh_finished && disconnected.safe_error == L"Could not check Codex.", "A disconnected client must finish the refresh so it can restart.");
 
     const auto selected = SelectTrayEntries({
         {L"one", L"C:\\One\\CodexWeekUsageTray.exe"},

@@ -45,7 +45,9 @@ native\out\CodexWeekUsageTray.exe --self-test
 
 ## Remove saved tray entries
 
-When testing has left old copies in **Other system tray icons**, run:
+When testing has left old copies in **Other system tray icons**, double-click `uninstall.cmd` beside the EXE. It starts cleanup immediately; there is no word to type or confirmation prompt.
+
+From a terminal, you can also run:
 
 ```powershell
 native\out\CodexWeekUsageTray.exe --uninstall-dry-run
@@ -61,6 +63,6 @@ The dry run only lists exact `CodexWeekUsageTray.exe` entries. The uninstall com
 - The native host has no updater, downloader, startup registration, or app-owned network client. Codex CLI handles its own account traffic over a local stdio connection.
 - Release EXEs are not Authenticode-signed yet. Check the published SHA-256 value before running a downloaded file.
 
-Each public release includes one EXE in a ZIP and a matching `SHA256SUMS` manifest. The archive contains no .NET runtime, DLL, PDB, or script.
+v2.0.1 and later releases include the EXE, `uninstall.cmd`, and a matching `SHA256SUMS` manifest. The archive contains no .NET runtime, DLL, or PDB. v2.0.0 included only the EXE.
 
 The app stores the current limit only in memory. Windows may keep normal notification-icon settings, and Codex CLI keeps its own session data.

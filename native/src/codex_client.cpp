@@ -6,7 +6,7 @@
 
 #include <array>
 #include <filesystem>
-#include <vector>
+#include <shlobj.h>
 
 namespace {
 
@@ -26,20 +26,6 @@ std::wstring Utf8ToWide(std::string_view value) {
     }
 
     return result;
-}
-
-std::optional<std::wstring> LocalAppData() {
-    const DWORD size = GetEnvironmentVariableW(L"LOCALAPPDATA", nullptr, 0);
-    if (size == 0) {
-        return std::nullopt;
-    }
-
-    std::vector<wchar_t> value(size);
-    if (GetEnvironmentVariableW(L"LOCALAPPDATA", value.data(), size) == 0) {
-        return std::nullopt;
-    }
-
-    return std::wstring(value.data());
 }
 
 bool IsExistingFile(const std::filesystem::path& path) {
@@ -120,6 +106,16 @@ CodexEvent ParseServerLine(std::string_view line) {
     return event;
 }
 
+std::optional<std::filesystem::path> InstalledCodexPath() {
+    PWSTR local_app_data{};
+    if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_DEFAULT, nullptr, &local_app_data))) {
+        return std::nullopt;
+    }
+    const std::filesystem::path executable = StandardCodexPath(local_app_data);
+    CoTaskMemFree(local_app_data);
+    return executable;
+}
+
 CodexClient::~CodexClient() {
     Stop();
 }
@@ -129,13 +125,8 @@ bool CodexClient::Start(HWND receiver) {
         return true;
     }
 
-    const auto local_app_data = LocalAppData();
-    if (!local_app_data) {
-        return false;
-    }
-
-    const auto executable = StandardCodexPath(*local_app_data);
-    if (!IsExistingFile(executable)) {
+    const auto executable = InstalledCodexPath();
+    if (!executable || !IsExistingFile(*executable)) {
         return false;
     }
 
@@ -169,8 +160,9 @@ bool CodexClient::Start(HWND receiver) {
     startup.hStdError = null_stderr;
 
     PROCESS_INFORMATION process_information{};
-    std::wstring command = L"\"" + executable.wstring() + L"\" app-server --stdio";
-    const BOOL created = CreateProcessW(executable.c_str(), command.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process_information);
+    std::wstring command = L"\"" + executable->wstring() + L"\" app-server --stdio";
+    awaiting_initialization_ = true;
+    const BOOL created = CreateProcessW(executable->c_str(), command.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process_information);
     CloseHandle(child_stdin_read);
     CloseHandle(child_stdout_write);
     CloseHandle(null_stderr);
@@ -184,7 +176,6 @@ bool CodexClient::Start(HWND receiver) {
     receiver_ = receiver;
     stopping_ = false;
     reader_ = std::thread(&CodexClient::ReadLoop, this);
-    awaiting_initialization_ = true;
     if (!Write(BuildInitializeRequest(next_id_++))) {
         Stop();
         return false;
@@ -227,8 +218,8 @@ void CodexClient::RequestRateLimits() {
     Write(BuildRateLimitsRequest(next_id_++));
 }
 
-void CodexClient::StartChatGptLogin() {
-    Write(BuildLoginRequest(next_id_++));
+bool CodexClient::StartChatGptLogin() {
+    return Write(BuildLoginRequest(next_id_++));
 }
 
 void CodexClient::CancelLogin(std::string_view login_id) {

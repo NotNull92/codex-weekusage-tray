@@ -35,6 +35,7 @@ constexpr UINT WM_APP_CODEX_EVENT = WM_APP + 41;
 std::string BuildInitializeRequest(unsigned int id);
 std::string BuildLoginRequest(unsigned int id);
 CodexEvent ParseServerLine(std::string_view line);
+std::optional<std::filesystem::path> InstalledCodexPath();
 
 class CodexClient {
 public:
@@ -45,7 +46,7 @@ public:
     void Stop();
     void RequestAccount();
     void RequestRateLimits();
-    void StartChatGptLogin();
+    bool StartChatGptLogin();
     void CancelLogin(std::string_view login_id);
 
 private:

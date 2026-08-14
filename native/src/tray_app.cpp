@@ -36,9 +36,7 @@ public:
             return 1;
         }
         owner_ = CreateWindowExW(WS_EX_TOOLWINDOW, kOwnerClass, L"Codex WeekUsage Tray", WS_POPUP, 0, 0, 0, 0, nullptr, nullptr, instance_, this);
-        if (owner_ == nullptr || !popup_.Create(instance_, owner_, this, PopupCommand)) {
-            return 1;
-        }
+        if (owner_ == nullptr || !popup_.Create(instance_, owner_, this, PopupCommand)) return 1;
         preview_mode_ = mode != LaunchMode::Normal;
         if (mode == LaunchMode::PreviewPending) {
             state_.login_required = true;
@@ -50,9 +48,8 @@ public:
         }
         UpdateIcon();
         AddTrayIcon();
-        if (preview_mode_) {
-            ShowPopup();
-        } else {
+        if (preview_mode_) ShowPopup();
+        else {
             EnsureClient();
             SetTimer(owner_, TIMER_REFRESH, 5000, nullptr);
         }
@@ -76,9 +73,7 @@ private:
         return app ? app->HandleOwnerMessage(message, wparam, lparam) : DefWindowProcW(window, message, wparam, lparam);
     }
 
-    static void PopupCommand(void* context, UINT command) {
-        static_cast<NativeApp*>(context)->HandleCommand(command);
-    }
+    static void PopupCommand(void* context, UINT command) { static_cast<NativeApp*>(context)->HandleCommand(command); }
 
     LRESULT HandleOwnerMessage(UINT message, WPARAM wparam, LPARAM lparam) {
         if (message == WM_APP_TRAY) {
@@ -94,10 +89,7 @@ private:
             HandleCodexEvent(*event);
             return 0;
         }
-        if (message == WM_TIMER && wparam == TIMER_REFRESH) {
-            RefreshNow();
-            return 0;
-        }
+        if (message == WM_TIMER && wparam == TIMER_REFRESH) { RefreshNow(); return 0; }
         if (message == WM_COMMAND) {
             HandleCommand(LOWORD(wparam));
             return 0;
@@ -135,34 +127,26 @@ private:
     }
 
     void RefreshNow() {
-        if (preview_mode_ || refresh_pending_ || !EnsureClient()) {
-            return;
-        }
-        refresh_pending_ = true;
-        client_.RequestAccount();
+        if (preview_mode_ || refresh_pending_ || !EnsureClient()) return;
+        refresh_pending_ = true; client_.RequestAccount();
     }
 
     void StartLogin() {
-        if (preview_mode_ || !EnsureClient()) {
-            return;
-        }
+        if (preview_mode_ || login_start_pending_ || !EnsureClient()) return;
         if (!state_.pending_login_id.empty()) {
-            client_.CancelLogin(state_.pending_login_id);
-            state_.pending_login_id.clear();
+            client_.CancelLogin(state_.pending_login_id); state_.pending_login_id.clear();
         }
         state_.safe_error.clear();
-        client_.StartChatGptLogin();
+        if (!client_.StartChatGptLogin()) { state_.safe_error = L"Could not start sign in."; popup_.Update(state_); return; }
+        login_start_pending_ = true;
         popup_.Update(state_);
     }
 
     void HandleCodexEvent(const CodexTray::CodexEvent& event) {
+        if (event.kind == CodexTray::CodexEventKind::LoginStarted || event.kind == CodexTray::CodexEventKind::Error) login_start_pending_ = false;
         state_ = CodexTray::ApplyEvent(std::move(state_), event);
-        if (event.kind == CodexTray::CodexEventKind::Account && event.success) {
-            client_.RequestRateLimits();
-        }
-        if (state_.refresh_finished) {
-            refresh_pending_ = false;
-        }
+        if (event.kind == CodexTray::CodexEventKind::Account && event.success) client_.RequestRateLimits();
+        if (state_.refresh_finished) refresh_pending_ = false;
         if (event.kind == CodexTray::CodexEventKind::LoginStarted) {
             const auto result = reinterpret_cast<INT_PTR>(ShellExecuteW(owner_, L"open", event.authorization_url.c_str(), nullptr, nullptr, SW_SHOWNORMAL));
             if (result <= 32) {
@@ -269,7 +253,7 @@ private:
     HWND owner_{};
     NOTIFYICONDATAW tray_{};
     HICON icon_{};
-    bool tray_added_{}, preview_mode_{}, client_running_{}, refresh_pending_{};
+    bool tray_added_{}, preview_mode_{}, client_running_{}, refresh_pending_{}, login_start_pending_{};
     std::wstring last_tray_label_;
     CodexTray::AppState state_;
     CodexTray::CodexClient client_;

@@ -4,10 +4,12 @@
 #include "../src/main.h"
 #include "fixtures.h"
 
+#include <array>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <windows.h>
 
 namespace {
 
@@ -39,6 +41,12 @@ int wmain() {
 
     const auto codex_path = StandardCodexPath(LR"(C:\Users\Test\AppData\Local)");
     Expect(codex_path.wstring() == LR"(C:\Users\Test\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe)", "Codex path must be fixed.");
+    std::array<wchar_t, 32768> original_local_app_data{};
+    const DWORD original_length = GetEnvironmentVariableW(L"LOCALAPPDATA", original_local_app_data.data(), static_cast<DWORD>(original_local_app_data.size()));
+    Expect(SetEnvironmentVariableW(L"LOCALAPPDATA", L"C:\\Untrusted") != FALSE, "Test must set a process-local hostile environment value.");
+    const auto installed_codex_path = InstalledCodexPath();
+    Expect(SetEnvironmentVariableW(L"LOCALAPPDATA", original_length == 0 ? nullptr : original_local_app_data.data()) != FALSE, "Test must restore the process-local environment value.");
+    Expect(installed_codex_path && *installed_codex_path != StandardCodexPath(L"C:\\Untrusted"), "Installed Codex path must ignore inherited LOCALAPPDATA.");
     Expect(JsonString("a\"b\\c\n") == "\"a\\\"b\\\\c\\n\"", "JSON writer must escape control characters.");
 
     Expect(BuildInitializeRequest(1).find("\"method\":\"initialize\"") != std::string::npos, "Client must initialize first.");
@@ -70,6 +78,13 @@ int wmain() {
     Expect(ignored.pending_login_id == state.pending_login_id && ignored.login_required == state.login_required, "Mismatched login completion must be ignored.");
     const auto failed_login = ApplyEvent(state, CodexEvent{CodexEventKind::LoginCompleted, "expected", {}, std::nullopt, false});
     Expect(failed_login.login_required, "Failed matching login must remain actionable.");
+    state.pending_login_id = "expected";
+    state = ApplyEvent(state, CodexEvent{CodexEventKind::LoginCompleted, "expected", {}, std::nullopt, true});
+    Expect(state.next_request == RequestKind::Account && !state.refresh_finished, "Successful login must request a fresh account check.");
+    state = ApplyEvent(state, CodexEvent{CodexEventKind::Account, {}, {}, std::nullopt, true});
+    Expect(state.next_request == RequestKind::RateLimits && !state.refresh_finished, "Signed-in account must request limits before completing refresh.");
+    state = ApplyEvent(state, CodexEvent{CodexEventKind::RateLimits, {}, {}, QuotaSnapshot{27, 73, 1781395200}, true});
+    Expect(state.quota && state.refresh_finished, "Rate-limit result must complete the login refresh.");
 
     const auto selected = SelectTrayEntries({
         {L"one", L"C:\\One\\CodexWeekUsageTray.exe"},

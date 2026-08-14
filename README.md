@@ -2,6 +2,10 @@
   <img src="docs/logo/logo.png" width="160" alt="Codex Weekly Limit Tray logo">
 </p>
 
+<p align="center">
+  <b>English</b> | <a href="README.ko.md">한국어</a>
+</p>
+
 # Codex Weekly Limit Tray
 
 A small native Windows app that shows your Codex weekly limit in the system tray.

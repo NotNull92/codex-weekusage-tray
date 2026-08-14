@@ -161,6 +161,55 @@ std::wstring DisplayLabel(const std::optional<QuotaSnapshot>& quota) {
     return quota ? std::to_wstring(quota->remaining_percent) : L"--";
 }
 
+std::optional<std::string> JsonStringField(std::string_view json, std::string_view name) {
+    const auto tokens = ParseTokens(json);
+    if (!tokens || tokens->front().type != JSMN_OBJECT) {
+        return std::nullopt;
+    }
+
+    const auto index = FindObjectValue(*tokens, json, 0, name);
+    if (!index || (*tokens)[*index].type != JSMN_STRING) {
+        return std::nullopt;
+    }
+
+    return std::string(TokenText(json, (*tokens)[*index]));
+}
+
+std::optional<bool> JsonBooleanField(std::string_view json, std::string_view name) {
+    const auto tokens = ParseTokens(json);
+    if (!tokens || tokens->front().type != JSMN_OBJECT) {
+        return std::nullopt;
+    }
+
+    const auto index = FindObjectValue(*tokens, json, 0, name);
+    if (!index || (*tokens)[*index].type != JSMN_PRIMITIVE) {
+        return std::nullopt;
+    }
+
+    const auto value = TokenText(json, (*tokens)[*index]);
+    if (value == "true") {
+        return true;
+    }
+    if (value == "false") {
+        return false;
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> JsonObjectField(std::string_view json, std::string_view name) {
+    const auto tokens = ParseTokens(json);
+    if (!tokens || tokens->front().type != JSMN_OBJECT) {
+        return std::nullopt;
+    }
+
+    const auto index = FindObjectValue(*tokens, json, 0, name);
+    if (!index || (*tokens)[*index].type != JSMN_OBJECT) {
+        return std::nullopt;
+    }
+
+    return std::string(TokenText(json, (*tokens)[*index]));
+}
+
 bool IsOfficialLoginUrl(std::wstring_view url) {
     if (url.empty() || url.size() > std::numeric_limits<DWORD>::max() || url.find(L'#') != std::wstring_view::npos) {
         return false;

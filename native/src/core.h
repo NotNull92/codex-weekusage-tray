@@ -16,6 +16,9 @@ struct QuotaSnapshot {
 
 std::optional<QuotaSnapshot> ParseWeeklyQuota(std::string_view json);
 std::wstring DisplayLabel(const std::optional<QuotaSnapshot>& quota);
+std::optional<std::string> JsonStringField(std::string_view json, std::string_view name);
+std::optional<bool> JsonBooleanField(std::string_view json, std::string_view name);
+std::optional<std::string> JsonObjectField(std::string_view json, std::string_view name);
 bool IsOfficialLoginUrl(std::wstring_view url);
 std::filesystem::path StandardCodexPath(std::wstring_view local_app_data);
 std::string JsonString(std::string_view value);

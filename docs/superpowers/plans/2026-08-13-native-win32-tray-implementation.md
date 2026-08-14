@@ -208,7 +208,7 @@ git commit -m "feat: add native Codex protocol core"
 - `WM_APP_CODEX_EVENT` carries an owning `CodexEvent*` allocated by the reader and freed by the receiving UI handler.
 - `CodexClient::Stop()` closes pipes, requests reader stop, waits, then terminates only the child it created.
 
-- [ ] **Step 1: Write failing JSON-RPC framing and event tests**
+- [x] **Step 1: Write failing JSON-RPC framing and event tests**
 
 Add a fake-line parser test that proves exact request and response routing before any process starts:
 
@@ -219,7 +219,7 @@ Expect(ParseServerLine(kRateLimitUpdated).kind == CodexEventKind::RateLimitUpdat
 Expect(ParseServerLine(kLoginCompleted).kind == CodexEventKind::LoginCompleted, "Login completion must be recognized.");
 ```
 
-- [ ] **Step 2: Run the test to verify it fails for the absent client module**
+- [x] **Step 2: Run the test to verify it fails for the absent client module**
 
 Run:
 
@@ -230,7 +230,7 @@ native\out\CodexWeekUsageTrayTests.exe
 
 Expected: compile failure for `codex_client.h` declarations.
 
-- [ ] **Step 3: Implement process, pipe, request, and event ownership rules**
+- [x] **Step 3: Implement process, pipe, request, and event ownership rules**
 
 Implement the following concrete lifecycle:
 
@@ -266,7 +266,7 @@ native\out\CodexWeekUsageTray.exe --self-test
 
 Expected: tests exit 0; self-test only verifies parsing/framing and does not start a browser.
 
-- [ ] **Step 5: Commit the client**
+- [x] **Step 5: Commit the client**
 
 ```bash
 git add native/src/codex_client.h native/src/codex_client.cpp native/tests/native_tests.cpp native/tests/fixtures.h native/build.cmd

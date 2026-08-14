@@ -1,4 +1,5 @@
 #include "../src/core.h"
+#include "../src/codex_client.h"
 #include "fixtures.h"
 
 #include <filesystem>
@@ -36,6 +37,11 @@ int wmain() {
     const auto codex_path = StandardCodexPath(LR"(C:\Users\Test\AppData\Local)");
     Expect(codex_path.wstring() == LR"(C:\Users\Test\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe)", "Codex path must be fixed.");
     Expect(JsonString("a\"b\\c\n") == "\"a\\\"b\\\\c\\n\"", "JSON writer must escape control characters.");
+
+    Expect(BuildInitializeRequest(1).find("\"method\":\"initialize\"") != std::string::npos, "Client must initialize first.");
+    Expect(BuildLoginRequest(7).find("\"type\":\"chatgpt\"") != std::string::npos, "Client must request managed ChatGPT login.");
+    Expect(ParseServerLine(kRateLimitUpdated).kind == CodexEventKind::RateLimitUpdated, "Rate-limit event must be recognized.");
+    Expect(ParseServerLine(kLoginCompleted).kind == CodexEventKind::LoginCompleted, "Login completion must be recognized.");
 
     return 0;
 }

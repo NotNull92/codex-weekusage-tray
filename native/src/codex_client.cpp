@@ -2,6 +2,8 @@
 
 #include "codex_client.h"
 
+#include "codex_protocol.h"
+
 #include <array>
 #include <filesystem>
 #include <vector>
@@ -51,33 +53,9 @@ CodexTray::CodexEvent Event(CodexTray::CodexEventKind kind) {
     return event;
 }
 
-std::string BuildInitializedNotification() {
-    return R"json({"method":"initialized","params":{}})json";
-}
-
-std::string BuildAccountRequest(unsigned int id) {
-    return "{\"id\":" + std::to_string(id) + R"json(,"method":"account/read","params":{"refreshToken":false}})json";
-}
-
-std::string BuildRateLimitsRequest(unsigned int id) {
-    return "{\"id\":" + std::to_string(id) + R"json(,"method":"account/rateLimits/read","params":{}})json";
-}
-
-std::string BuildCancelLoginRequest(unsigned int id, std::string_view login_id) {
-    return "{\"id\":" + std::to_string(id) + R"json(,"method":"account/login/cancel","params":{"loginId":)json" + CodexTray::JsonString(login_id) + "}}";
-}
-
 }
 
 namespace CodexTray {
-
-std::string BuildInitializeRequest(unsigned int id) {
-    return "{\"id\":" + std::to_string(id) + R"json(,"method":"initialize","params":{"clientInfo":{"name":"codex-weekusage-tray","title":"Codex WeekUsage Tray","version":"2.0.0"}}})json";
-}
-
-std::string BuildLoginRequest(unsigned int id) {
-    return "{\"id\":" + std::to_string(id) + R"json(,"method":"account/login/start","params":{"type":"chatgpt","useHostedLoginSuccessPage":true,"appBrand":"codex"}})json";
-}
 
 CodexEvent ParseServerLine(std::string_view line) {
     if (const auto method = JsonStringField(line, "method")) {
@@ -112,9 +90,9 @@ CodexEvent ParseServerLine(std::string_view line) {
         return {};
     }
 
-    if (const auto quota = ParseWeeklyQuota(*result)) {
+    if (JsonObjectField(*result, "rateLimits") || JsonObjectField(*result, "rateLimitsByLimitId")) {
         CodexEvent event = Event(CodexEventKind::RateLimits);
-        event.quota = quota;
+        event.quota = ParseWeeklyQuota(*result);
         return event;
     }
 

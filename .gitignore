@@ -4,3 +4,4 @@
 artifacts/
 .worktrees/
 .omo/
+native/out/

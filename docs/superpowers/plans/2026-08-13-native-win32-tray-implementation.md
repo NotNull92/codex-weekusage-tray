@@ -48,7 +48,7 @@
 - Produces `native/out/CodexWeekUsageTray.exe` and `native/out/CodexWeekUsageTrayTests.exe`.
 - Test entry point is `int wmain()` and returns zero only after every assertion passes.
 
-- [ ] **Step 1: Write the failing test harness**
+- [x] **Step 1: Write the failing test harness**
 
 Create `native/tests/native_tests.cpp` containing a deliberately unresolved core call:
 
@@ -64,7 +64,7 @@ int wmain() {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails for the missing module**
+- [x] **Step 2: Run the test to verify it fails for the missing module**
 
 Run:
 
@@ -74,7 +74,7 @@ cmd /d /c native\build.cmd tests
 
 Expected: compilation fails because `native/src/core.h` does not exist.
 
-- [ ] **Step 3: Add the minimal compiler command and test-only header declaration**
+- [x] **Step 3: Add the minimal compiler command and test-only header declaration**
 
 Create `native/build.cmd` with a fixed UCRT64 compiler path, an `out` directory, and the command shape below. Create only the declaration required for the initial test; later tasks add implementation.
 
@@ -94,7 +94,7 @@ if /I "%~1"=="tests" (
 
 Add `native/out/` to `.gitignore`.
 
-- [ ] **Step 4: Run the test to verify the harness executes**
+- [x] **Step 4: Run the test to verify the harness executes**
 
 Run:
 
@@ -105,7 +105,7 @@ native\out\CodexWeekUsageTrayTests.exe
 
 Expected: exit 0 after `DisplayLabel` is minimally implemented in Task 2.
 
-- [ ] **Step 5: Commit the harness**
+- [x] **Step 5: Commit the harness**
 
 ```bash
 git add .gitignore native/build.cmd native/tests/native_tests.cpp native/src/core.h native/src/core.cpp

@@ -200,7 +200,7 @@ void CodexClient::Stop() {
     if (process_ != nullptr && WaitForSingleObject(process_, 0) == WAIT_TIMEOUT) TerminateProcess(process_, 0);
     if (reader_.joinable()) reader_.join();
     if (stdout_read_ != nullptr) { CloseHandle(stdout_read_); stdout_read_ = nullptr; }
-    if (process_ != nullptr) { WaitForSingleObject(process_, 2000); CloseHandle(process_); process_ = nullptr; }
+    if (process_ != nullptr) { WaitForSingleObject(process_, INFINITE); CloseHandle(process_); process_ = nullptr; }
     std::lock_guard events_lock(events_mutex_);
     events_.clear();
     receiver_ = nullptr;

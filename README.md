@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>English</b> | <a href="README.ko.md">한국어</a>
+  <b>English</b> | <a href="README.ko.md">한국어</a> | <a href="README.ja.md">日本語</a> | <a href="README.zh-CN.md">简体中文</a> | <a href="README.ru.md">Русский</a>
 </p>
 
 # Codex Weekly Limit Tray

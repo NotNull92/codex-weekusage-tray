@@ -9,7 +9,7 @@ The tray icon shows a large bold number such as `73`, or `--` while the limit is
 - Windows 10 or Windows 11 on x64
 - The official [Codex CLI](https://developers.openai.com/codex/cli/)
 
-The app starts Codex only from its normal per-user install location:
+The app resolves Codex through Windows' per-user Local AppData known folder. Its normal location is:
 
 ```text
 %LOCALAPPDATA%\Programs\OpenAI\Codex\bin\codex.exe
@@ -58,5 +58,7 @@ The dry run only lists exact `CodexWeekUsageTray.exe` entries. The uninstall com
 - Login URLs must use HTTPS with the exact host `chatgpt.com` or `auth.openai.com` before the default browser opens them.
 - The native host has no updater, downloader, startup registration, or app-owned network client. Codex CLI handles its own account traffic over a local stdio connection.
 - Release EXEs are not Authenticode-signed yet. Check the published SHA-256 value before running a downloaded file.
+
+Each public release includes one EXE in a ZIP and a matching `SHA256SUMS` manifest. The archive contains no .NET runtime, DLL, PDB, or script.
 
 The app stores the current limit only in memory. Windows may keep normal notification-icon settings, and Codex CLI keeps its own session data.

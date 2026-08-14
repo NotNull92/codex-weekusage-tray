@@ -6,7 +6,13 @@
 
 **Architecture:** A hidden Win32 owner window owns `Shell_NotifyIcon`, the context menu, a borderless popup window, and all UI state. A small `CodexClient` child-process component starts only the standard OpenAI Codex CLI path, communicates through JSONL pipes, and posts parsed replies/events back to the UI thread. The native host retains the required Codex App Server process; it is the only component allowed to handle ChatGPT OAuth and tokens.
 
-**Tech Stack:** C++17, UCRT64 MinGW `g++` 16.1.0, Win32, Shell32, Comctl32, Ole32, GDI+, jsmn (vendored MIT source), no .NET runtime, no package manager, no network client.
+**Tech Stack:** C++17, UCRT64 MinGW `g++` 16.1.0, Win32, Shell32, Ole32, UUID, GDI/msimg32, jsmn (vendored MIT source), no .NET runtime, no package manager, no network client.
+
+## Current implementation record
+
+Tasks 1–7 are complete. The final implementation is split into small native modules: `main.cpp` (entry/reducer), `tray_app.cpp` (owner window, timer, menu, client dispatch), `tray_icon.cpp` (transparent numeric icon), `popup.cpp` and `popup_paint.cpp` (native controls and GDI panel), `cleanup.cpp` (safe direct cleanup), and `codex_protocol.cpp` (JSON-RPC request construction). The older per-task code excerpts below are historical implementation instructions; this map is the current source of truth.
+
+The native host resolves Codex with `SHGetKnownFolderPath(FOLDERID_LocalAppData)`, not an inherited environment variable. The build links MinGW's UUID import library for that Windows known-folder identifier.
 
 ## Global Constraints
 
@@ -29,7 +35,12 @@
 | `native/third_party/jsmn.h` | Pinned upstream MIT JSON tokenizer source and license notice. |
 | `native/src/core.h` / `native/src/core.cpp` | Pure JSON parsing/escaping, quota selection, time formatting, secure URL validation, and standard Codex-path construction. |
 | `native/src/codex_client.h` / `native/src/codex_client.cpp` | Process/pipes, JSON-RPC framing, response correlation, and immutable UI event messages. |
-| `native/src/main.cpp` | Application class, Win32 windows, tray icon, popup drawing, menu, timers, browser launch, and native uninstaller. |
+| `native/src/main.cpp` | Application entry point and pure UI state reducer. |
+| `native/src/tray_app.cpp` | Hidden owner window, Shell notification icon, menu, timer, client event dispatch, and browser launch. |
+| `native/src/tray_icon.cpp` | Transparent 32×32 bold lavender `--`/percentage icon renderer. |
+| `native/src/popup.cpp` / `native/src/popup_paint.cpp` | Native popup controls and GDI neon panel drawing. |
+| `native/src/cleanup.cpp` | Direct, current-user notification-icon cleanup. |
+| `native/src/codex_protocol.cpp` | JSON-RPC request construction. |
 | `native/tests/native_tests.cpp` | Deterministic core, protocol, and uninstaller-selection unit tests. |
 | `native/tests/fixtures.h` | Synthetic JSONL responses only; no personal account data. |
 | `README.md` | Native build/run/security/remove instructions and verified memory/size result. |
@@ -249,7 +260,7 @@ constexpr UINT WM_APP_CODEX_EVENT = WM_APP + 41;
 - Route JSON-RPC errors into an `Error` event using only the generic user-safe text; never copy server payloads to logs or UI.
 - Ignore unknown notifications and completion events whose `loginId` does not match UI state.
 
-- [ ] **Step 4: Run deterministic client tests and an offline app-server startup check**
+- [x] **Step 4: Run deterministic client tests and an offline app-server startup check**
 
 Run:
 

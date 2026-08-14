@@ -44,6 +44,22 @@ The panel is a 368px by 282px DPI-scaled tray popover. A 16px outer inset create
 - **Accessibility:** visible text labels; standard WinForms tab order; high-contrast primary text; borderless form is named `Codex weekly limit` for assistive tools.
 - **Layout:** one fixed-width column, repositioned by the existing tray-anchor logic.
 
+### Tray glyph
+
+- **Structure:** the remaining percentage as a bold number, or `--` before a
+  reading exists, in `GlowStart` on a transparent 32px icon.
+- **Sizing:** the type is fitted to the ink the glyph actually puts down, not to
+  the font's line box. Digits carry no descender, so fitting by line box would
+  give away about a third of the height.
+- **Three digits:** `100` is condensed horizontally by up to 28% before the type
+  size is reduced, because shrinking it far enough to fit at full width leaves
+  it unreadable.
+- **Rendering:** drawn four times larger and filtered down, since GDI hinting
+  reshapes bold digits at icon sizes. A coverage curve removes the faint fringe
+  the filter leaves, so the strokes read as solid rather than grey.
+- **Accessibility:** the same figures appear as text in the tooltip and the
+  panel; the glyph is never the only way to read the number.
+
 ### Action button
 
 - **Variants:** primary (`Sign in`), secondary (`Refresh`, `Check`, `Close`).

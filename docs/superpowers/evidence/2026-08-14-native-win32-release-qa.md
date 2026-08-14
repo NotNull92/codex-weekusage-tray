@@ -7,16 +7,15 @@ This record contains no account data, tokens, browser state, or user paths.
 - Local release paths: `artifacts/release-v2.0.0/CodexWeekUsageTray.exe`, `artifacts/CodexWeekUsageTray-win-x64-v2.0.0.zip`, and `artifacts/SHA256SUMS-v2.0.0.txt`.
 - The native implementation is unchanged in the final managed-cleanup commit. The release EXE is rebuilt from the exact final release commit immediately before upload.
 - Commands passed: `native\build.cmd tests`, `native\out\CodexWeekUsageTrayTests.exe`, `native\build.cmd`, and `native\out\CodexWeekUsageTray.exe --self-test`.
-- Release EXE: `CodexWeekUsageTray.exe`, 1,071,104 bytes.
-- SHA-256 is generated from that final EXE and distributed only in the accompanying release `SHA256SUMS` manifest.
+- The final EXE size and SHA-256 are distributed only in the accompanying release `SHA256SUMS` manifest, because the PE linker timestamp can change the byte hash across equivalent rebuilds.
 - Authenticode status: `NotSigned`.
 - ZIP verification: `tar -tvf CodexWeekUsageTray-win-x64-v2.0.0.zip` listed exactly one file, `CodexWeekUsageTray.exe`.
 - Packaged `--self-test` exited `0`.
-- Packaged `--uninstall-dry-run` exited `0` and left the current-user notification-icon key count unchanged (62 before and after).
+- Packaged `--uninstall-dry-run` exited `0` and left the current-user notification-icon key count unchanged.
 
 ## Security scan
 
-ESET command-line scan used `/clean-mode=none` on both the release folder and ZIP. Both exited `0`; the folder scan examined one object and the ZIP scan examined three objects. Both reported zero detections and zero cleaned objects.
+ESET command-line scan used `/clean-mode=none` on both the release folder and ZIP. Both exited `0` and reported zero detections and zero cleaned objects.
 
 ## Memory sample
 

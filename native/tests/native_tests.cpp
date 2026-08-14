@@ -58,6 +58,8 @@ int wmain() {
     Expect(number_ink.left >= 1 && number_ink.right <= 31, "Tray number must fit inside the icon.");
     Expect(number_ink.width >= 20, "Tray number must render both digits rather than only 7.");
     Expect(MeasureTrayInk(std::nullopt).width >= 12, "Pending state must render two dashes.");
+    const auto version4_left_click = static_cast<LPARAM>(static_cast<DWORD_PTR>(WM_LBUTTONUP) | (static_cast<DWORD_PTR>(1) << 16));
+    Expect(TrayNotificationEvent(version4_left_click) == WM_LBUTTONUP, "Version 4 tray clicks must decode from the low word of lParam.");
 
     const auto signed_out = BuildPopupModel(std::nullopt, true, false, L"");
     Expect(signed_out.metric == L"SIGN IN TO CODEX", "Signed-out panel must name Codex.");

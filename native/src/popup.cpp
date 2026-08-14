@@ -42,7 +42,7 @@ bool PopupWindow::Create(HINSTANCE instance, HWND owner, void* context, PopupCom
     if (RegisterClassExW(&popup_class) == 0 && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
         return false;
     }
-    window_ = CreateWindowExW(WS_EX_TOOLWINDOW, kPopupClass, L"Codex Weekly Limit", WS_POPUP, 0, 0, 368, 282, owner, nullptr, instance_, this);
+    window_ = CreateWindowExW(WS_EX_TOOLWINDOW, kPopupClass, L"Codex Weekly Limit", WS_POPUP, 0, 0, 368, 300, owner, nullptr, instance_, this);
     if (window_ == nullptr) {
         return false;
     }
@@ -79,7 +79,7 @@ void PopupWindow::Show(const CodexTray::AppState& state) {
     }
     state_ = state;
     const int width = Scaled(window_, 368);
-    const int height = Scaled(window_, 282);
+    const int height = Scaled(window_, 300);
     POINT point{};
     GetCursorPos(&point);
     MONITORINFO monitor{};
@@ -144,7 +144,7 @@ void PopupWindow::UpdateControls() {
         return std::find(model.actions.begin(), model.actions.end(), action) != model.actions.end();
     };
     const int x = Scaled(window_, 16);
-    const int y = Scaled(window_, 230);
+    const int y = Scaled(window_, 248);
     const int height = Scaled(window_, 36);
     MoveWindow(sign_in_button_, x, y, Scaled(window_, 110), height, TRUE);
     MoveWindow(check_button_, Scaled(window_, 134), y, Scaled(window_, 96), height, TRUE);

@@ -53,5 +53,6 @@ struct AppState {
 
 PopupModel BuildPopupModel(const std::optional<QuotaSnapshot>& quota, bool login_required, bool login_in_progress, std::wstring_view safe_error);
 AppState ApplyEvent(AppState state, const CodexEvent& event);
+UINT TrayNotificationEvent(LPARAM lparam);
 
 }

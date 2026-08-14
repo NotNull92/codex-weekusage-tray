@@ -37,12 +37,12 @@ BitmapPixels RenderTrayBitmap(const std::optional<int>& remaining_percent) {
     SetBkMode(dc, TRANSPARENT);
     SetTextColor(dc, RGB(149, 162, 255));
     const std::wstring label = TrayLabel(remaining_percent);
-    for (int height = 28; height >= 8; --height) {
+    for (int height = 30; height >= 8; --height) {
         const HFONT font = CreateFontW(-height, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe UI");
         const HGDIOBJ old_font = SelectObject(dc, font);
         RECT measured{0, 0, 0, 0};
         DrawTextW(dc, label.c_str(), static_cast<int>(label.size()), &measured, DT_CALCRECT | DT_SINGLELINE);
-        if (measured.right <= 30 && measured.bottom <= 30) {
+        if (measured.right <= 31 && measured.bottom <= 31) {
             RECT target{0, 0, 32, 32};
             DrawTextW(dc, label.c_str(), static_cast<int>(label.size()), &target, DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX);
             SelectObject(dc, old_font);

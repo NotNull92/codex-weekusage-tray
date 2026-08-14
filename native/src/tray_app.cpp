@@ -76,9 +76,10 @@ private:
 
     LRESULT HandleOwnerMessage(UINT message, WPARAM wparam, LPARAM lparam) {
         if (message == WM_APP_TRAY) {
-            if (lparam == WM_LBUTTONUP || lparam == NIN_SELECT || lparam == NIN_KEYSELECT) {
+            const UINT tray_event = CodexTray::TrayNotificationEvent(lparam);
+            if (tray_event == WM_LBUTTONUP || tray_event == NIN_SELECT || tray_event == NIN_KEYSELECT) {
                 popup_.IsVisible() ? popup_.Hide() : ShowPopup();
-            } else if (lparam == WM_RBUTTONUP) {
+            } else if (tray_event == WM_RBUTTONUP) {
                 ShowMenu();
             }
             return 0;
@@ -254,6 +255,14 @@ private:
     CodexTray::CodexClient client_;
     PopupWindow popup_;
 };
+
+}
+
+namespace CodexTray {
+
+UINT TrayNotificationEvent(LPARAM lparam) {
+    return LOWORD(static_cast<DWORD_PTR>(lparam));
+}
 
 }
 

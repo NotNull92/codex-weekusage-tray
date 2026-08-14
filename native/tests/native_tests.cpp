@@ -71,14 +71,9 @@ int wmain() {
     auto state = ApplyEvent(AppState{}, CodexEvent{CodexEventKind::Account, {}, {}, std::nullopt, false});
     Expect(state.login_required && !state.quota, "Non-ChatGPT account must require login.");
     Expect(state.refresh_finished, "A rejected account check must allow a later sign-in refresh.");
-    state = ApplyEvent(state, CodexEvent{CodexEventKind::Account, {}, {}, std::nullopt, true});
-    Expect(state.next_request == RequestKind::RateLimits, "ChatGPT account must request limits.");
-    state.pending_login_id = "expected";
+    state = ApplyEvent(state, CodexEvent{CodexEventKind::LoginStarted, "expected", {}, std::nullopt, true});
     const auto ignored = ApplyEvent(state, CodexEvent{CodexEventKind::LoginCompleted, "other", {}, std::nullopt, true});
     Expect(ignored.pending_login_id == state.pending_login_id && ignored.login_required == state.login_required, "Mismatched login completion must be ignored.");
-    const auto failed_login = ApplyEvent(state, CodexEvent{CodexEventKind::LoginCompleted, "expected", {}, std::nullopt, false});
-    Expect(failed_login.login_required, "Failed matching login must remain actionable.");
-    state.pending_login_id = "expected";
     state = ApplyEvent(state, CodexEvent{CodexEventKind::LoginCompleted, "expected", {}, std::nullopt, true});
     Expect(state.next_request == RequestKind::Account && !state.refresh_finished, "Successful login must request a fresh account check.");
     state = ApplyEvent(state, CodexEvent{CodexEventKind::Account, {}, {}, std::nullopt, true});

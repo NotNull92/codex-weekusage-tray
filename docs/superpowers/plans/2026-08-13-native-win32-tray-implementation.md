@@ -128,7 +128,7 @@ git commit -m "build: add native test harness"
 - `std::filesystem::path StandardCodexPath(std::wstring_view local_app_data)` creates the fixed CLI location.
 - `std::string JsonString(std::string_view value)` returns an escaped JSON string literal.
 
-- [ ] **Step 1: Write the failing pure behavior tests**
+- [x] **Step 1: Write the failing pure behavior tests**
 
 Extend `native/tests/native_tests.cpp` using only synthetic fixtures:
 
@@ -144,7 +144,7 @@ Expect(StandardCodexPath(LR"(C:\Users\Test\AppData\Local)").wstring() == LR"(C:\
 Expect(JsonString("a\"b\\c\n") == "\"a\\\"b\\\\c\\n\"", "JSON writer must escape control characters.");
 ```
 
-- [ ] **Step 2: Run the test to verify it fails for unimplemented core behavior**
+- [x] **Step 2: Run the test to verify it fails for unimplemented core behavior**
 
 Run:
 
@@ -155,9 +155,9 @@ native\out\CodexWeekUsageTrayTests.exe
 
 Expected: fail at the first new assertion or missing symbol, not due to live Codex access.
 
-- [ ] **Step 3: Vendor the pinned tokenizer and implement exact helpers**
+- [x] **Step 3: Vendor the pinned tokenizer and implement exact helpers**
 
-Fetch only the `jsmn.h` release file from the upstream MIT project, retain its copyright/license text, and record the exact upstream tag/commit in the header comment. Build a small token traversal wrapper that reads only object strings, booleans, numbers, and nested objects needed by:
+Fetch only the `jsmn.h` release file from the upstream MIT project, retain its copyright/license text, and record the exact upstream tag/commit in the accompanying license notice. Build a small token traversal wrapper that reads only object strings, booleans, numbers, and nested objects needed by:
 
 ```cpp
 namespace CodexTray {
@@ -177,7 +177,7 @@ std::string JsonString(std::string_view value);
 
 `ParseWeeklyQuota` must examine both `rateLimits.primary` and the `rateLimitsByLimitId` object values, and select a window only when `windowDurationMins == 10080`. Clamp `usedPercent` to 0–100 before calculating `100 - usedPercent`. URL parsing must use `WinHttpCrackUrl` or equivalent Win32 parsing, compare hosts case-insensitively, reject userinfo, ports other than default HTTPS, fragments, and non-HTTPS schemes.
 
-- [ ] **Step 4: Run the pure native tests to verify they pass**
+- [x] **Step 4: Run the pure native tests to verify they pass**
 
 Run:
 
@@ -188,7 +188,7 @@ native\out\CodexWeekUsageTrayTests.exe
 
 Expected: exit 0; no Codex child or browser starts.
 
-- [ ] **Step 5: Commit the safe protocol core**
+- [x] **Step 5: Commit the safe protocol core**
 
 ```bash
 git add native/third_party/jsmn.h native/src/core.h native/src/core.cpp native/tests/fixtures.h native/tests/native_tests.cpp

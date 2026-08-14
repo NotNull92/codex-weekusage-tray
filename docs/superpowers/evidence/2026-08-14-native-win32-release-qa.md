@@ -5,7 +5,7 @@ This record contains no account data, tokens, browser state, or user paths.
 ## Build and package
 
 - Local release paths: `artifacts/release-v2.0.0/CodexWeekUsageTray.exe`, `artifacts/CodexWeekUsageTray-win-x64-v2.0.0.zip`, and `artifacts/SHA256SUMS-v2.0.0.txt`.
-- The packaged EXE was built from native implementation commit `69f95ce059cec1a7342c839b88d35720a1174c35`; this evidence record does not alter native sources. Rebuild the release EXE from that native implementation immediately before upload.
+- The packaged EXE was built from native implementation commit `3b080e8bb6b25cd1332692d1b2f8f717f4dc8a40`; this evidence record does not alter native sources. Rebuild the release EXE from that native implementation immediately before upload.
 - Commands passed: `native\build.cmd tests`, `native\out\CodexWeekUsageTrayTests.exe`, `native\build.cmd`, and `native\out\CodexWeekUsageTray.exe --self-test`.
 - The accompanying `SHA256SUMS` manifest carries the final EXE and ZIP SHA-256 values. The PE linker timestamp can change a byte hash across equivalent rebuilds.
 - Authenticode status: `NotSigned`.

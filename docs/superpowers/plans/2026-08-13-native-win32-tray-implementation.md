@@ -93,7 +93,7 @@ Create `native/build.cmd` with a fixed UCRT64 compiler path, an `out` directory,
 @echo off
 setlocal
 set "ROOT=%~dp0"
-set "CXX=C:\Users\PC\msys64\ucrt64\bin\g++.exe"
+set "CXX=C:\msys64\ucrt64\bin\g++.exe"
 set "OUT=%ROOT%out"
 if not exist "%OUT%" mkdir "%OUT%"
 if /I "%~1"=="tests" (

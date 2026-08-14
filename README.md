@@ -9,6 +9,8 @@ The tray icon shows a large bold number such as `73`, or `--` while the limit is
 - Windows 10 or Windows 11 on x64
 - The official [Codex CLI](https://developers.openai.com/codex/cli/)
 
+To build from source, install the MSYS2 UCRT64 C++ compiler. The build script checks `%USERPROFILE%\msys64\ucrt64\bin\g++.exe`, then `C:\msys64\ucrt64\bin\g++.exe`, or uses a full path supplied through the `CXX` environment variable.
+
 The app resolves Codex through Windows' per-user Local AppData known folder. Its normal location is:
 
 ```text

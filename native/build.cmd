@@ -1,8 +1,21 @@
 @echo off
 setlocal
 set "ROOT=%~dp0"
-set "CXX=C:\Users\PC\msys64\ucrt64\bin\g++.exe"
+if not defined CXX (
+  if exist "%USERPROFILE%\msys64\ucrt64\bin\g++.exe" (
+    set "CXX=%USERPROFILE%\msys64\ucrt64\bin\g++.exe"
+  ) else if exist "C:\msys64\ucrt64\bin\g++.exe" (
+    set "CXX=C:\msys64\ucrt64\bin\g++.exe"
+  ) else (
+    set "CXX=g++.exe"
+  )
+)
 set "OUT=%ROOT%out"
+
+"%CXX%" --version >nul 2>&1 || (
+  echo UCRT64 g++.exe was not found. Install MSYS2 UCRT64 or set CXX to its full path.
+  exit /b 1
+)
 
 if not exist "%OUT%" mkdir "%OUT%"
 

@@ -4,6 +4,7 @@ This record contains no account data, tokens, browser state, or user paths.
 
 ## Build and package
 
+- Local release paths: `artifacts/release-v2.0.0/CodexWeekUsageTray.exe`, `artifacts/CodexWeekUsageTray-win-x64-v2.0.0.zip`, and `artifacts/SHA256SUMS-v2.0.0.txt`.
 - The native implementation is unchanged in the final managed-cleanup commit. The release EXE is rebuilt from the exact final release commit immediately before upload.
 - Commands passed: `native\build.cmd tests`, `native\out\CodexWeekUsageTrayTests.exe`, `native\build.cmd`, and `native\out\CodexWeekUsageTray.exe --self-test`.
 - Release EXE: `CodexWeekUsageTray.exe`, 1,071,104 bytes.

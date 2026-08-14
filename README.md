@@ -17,17 +17,31 @@ The app resolves Codex through Windows' per-user Local AppData known folder. Its
 %LOCALAPPDATA%\Programs\OpenAI\Codex\bin\codex.exe
 ```
 
-## Run from source
+## Run the app
+
+For a public release, extract the ZIP and run `CodexWeekUsageTray.exe`.
+
+To build and run from source:
 
 ```powershell
 native\build.cmd
 native\out\CodexWeekUsageTray.exe
 ```
 
-The icon belongs to the normal Windows system tray. If it is hidden, enable **Codex WeekUsage Tray** in **Settings > Personalization > Taskbar > Other system tray icons**. It never covers the clock or date.
+The icon belongs to the normal Windows system tray. It never covers the clock or date.
+
+### Make the tray icon visible
+
+1. Run `CodexWeekUsageTray.exe`.
+2. Open **Settings > Personalization > Taskbar > Other system tray icons**.
+3. Find **CodexWeekUsageTray** and turn it **On**.
+
+Windows then shows the icon in the system tray instead of leaving it hidden in the overflow list.
 
 ## Use the panel
 
+- **Left-click the tray icon** to open or hide the detail panel.
+- **Right-click the tray icon**, then choose **Show panel** to open the detail panel from the tray menu.
 - **Refresh** checks your limit now.
 - **Close** hides only the panel. The tray app keeps running.
 - **Sign in** opens the official Codex ChatGPT sign-in page in your default browser when needed.
@@ -45,16 +59,18 @@ native\out\CodexWeekUsageTray.exe --self-test
 
 ## Remove saved tray entries
 
-When testing has left old copies in **Other system tray icons**, double-click `uninstall.cmd` beside the EXE. It starts cleanup immediately; there is no word to type or confirmation prompt.
+When testing has left old copies in **Other system tray icons**, double-click `uninstall.cmd` in the same folder as `CodexWeekUsageTray.exe`. It starts cleanup immediately; there is no word to type or confirmation prompt.
 
-From a terminal, you can also run:
+`uninstall.cmd` stops matching `CodexWeekUsageTray.exe` copies and removes only their current-user tray settings. It is useful before replacing an older release or when duplicate tray entries remain. It never deletes EXE files or changes another app's tray setting.
+
+From a terminal in the release folder, you can also run:
 
 ```powershell
-native\out\CodexWeekUsageTray.exe --uninstall-dry-run
-native\out\CodexWeekUsageTray.exe --uninstall
+.\CodexWeekUsageTray.exe --uninstall-dry-run
+.\CodexWeekUsageTray.exe --uninstall
 ```
 
-The dry run only lists exact `CodexWeekUsageTray.exe` entries. The uninstall command immediately stops matching older app copies and removes only their current-user tray settings. It never deletes EXE files or changes another app's tray setting.
+The dry run only lists exact `CodexWeekUsageTray.exe` entries and changes nothing.
 
 ## Security and privacy
 

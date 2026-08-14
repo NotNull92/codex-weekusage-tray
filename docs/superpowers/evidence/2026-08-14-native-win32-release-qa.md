@@ -4,10 +4,10 @@ This record contains no account data, tokens, browser state, or user paths.
 
 ## Build and package
 
-- Native source revision: `39bd310`.
+- The native implementation is unchanged in the final managed-cleanup commit. The release EXE is rebuilt from the exact final release commit immediately before upload.
 - Commands passed: `native\build.cmd tests`, `native\out\CodexWeekUsageTrayTests.exe`, `native\build.cmd`, and `native\out\CodexWeekUsageTray.exe --self-test`.
 - Release EXE: `CodexWeekUsageTray.exe`, 1,071,104 bytes.
-- SHA-256: `C68A183A91DE89ED7059A5856CCA1D950717356D61627916AF5FA9FB3B60CF3A`.
+- SHA-256 is generated from that final EXE and distributed only in the accompanying release `SHA256SUMS` manifest.
 - Authenticode status: `NotSigned`.
 - ZIP verification: `tar -tvf CodexWeekUsageTray-win-x64-v2.0.0.zip` listed exactly one file, `CodexWeekUsageTray.exe`.
 - Packaged `--self-test` exited `0`.

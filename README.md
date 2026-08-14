@@ -54,7 +54,7 @@ Release EXEs are not Authenticode-signed yet, so the first run shows **Windows p
 Get-FileHash .\CodexWeekUsageTray.exe -Algorithm SHA256
 ```
 
-Compare the result with the matching line in the `SHA256SUMS` file from the same release. If the values match, choose **More info > Run anyway**. If you would rather not run an unsigned binary at all, build from source with the steps above.
+Compare the result with the matching line in the `SHA256SUMS-<version>.txt` file from the same release. If the values match, choose **More info > Run anyway**. If you would rather not run an unsigned binary at all, build from source with the steps above.
 
 ### Make the tray icon visible
 
@@ -105,6 +105,6 @@ The dry run only lists exact `CodexWeekUsageTray.exe` entries and changes nothin
 - The native host has no updater, downloader, startup registration, or app-owned network client. Codex CLI handles its own account traffic over a local stdio connection.
 - Release EXEs are not Authenticode-signed yet. Check the published SHA-256 value before running a downloaded file.
 
-v2.0.1 and later releases include the EXE, `uninstall.cmd`, and a matching `SHA256SUMS` manifest. The archive contains no .NET runtime, DLL, or PDB. v2.0.0 included only the EXE.
+v2.0.1 and later releases include the EXE, `uninstall.cmd`, and a matching `SHA256SUMS-<version>.txt` manifest. The archive contains no .NET runtime, DLL, or PDB. v2.0.0 included only the EXE.
 
 The app stores the current limit only in memory. Windows may keep normal notification-icon settings, and Codex CLI keeps its own session data.

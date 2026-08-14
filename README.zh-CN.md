@@ -54,7 +54,7 @@ native\out\CodexWeekUsageTray.exe
 Get-FileHash .\CodexWeekUsageTray.exe -Algorithm SHA256
 ```
 
-把结果与同一版本 `SHA256SUMS` 文件中对应的一行进行比对。如果一致，选择 **更多信息 > 仍要运行**。如果你完全不想运行未签名的可执行文件，请按上面的步骤从源码构建。
+把结果与同一版本 `SHA256SUMS-<version>.txt` 文件中对应的一行进行比对。如果一致，选择 **更多信息 > 仍要运行**。如果你完全不想运行未签名的可执行文件，请按上面的步骤从源码构建。
 
 ### 让托盘图标可见
 
@@ -105,6 +105,6 @@ native\out\CodexWeekUsageTray.exe --self-test
 - 原生宿主没有更新器、下载器、开机启动注册项，也没有应用自有的网络客户端。账户相关流量由 Codex CLI 通过本地 stdio 连接自行处理。
 - 发行版 EXE 尚未进行 Authenticode 签名。运行下载的文件前，请先核对已公布的 SHA-256 值。
 
-v2.0.1 及之后的版本包含 EXE、`uninstall.cmd` 以及配套的 `SHA256SUMS` 清单。压缩包中不含 .NET 运行时、DLL 或 PDB。v2.0.0 仅包含 EXE。
+v2.0.1 及之后的版本包含 EXE、`uninstall.cmd` 以及配套的 `SHA256SUMS-<version>.txt` 清单。压缩包中不含 .NET 运行时、DLL 或 PDB。v2.0.0 仅包含 EXE。
 
 应用仅在内存中保存当前的用量上限。Windows 可能会保留常规的通知图标设置，Codex CLI 会保留自己的会话数据。

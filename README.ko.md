@@ -54,7 +54,7 @@ native\out\CodexWeekUsageTray.exe
 Get-FileHash .\CodexWeekUsageTray.exe -Algorithm SHA256
 ```
 
-결과값을 같은 릴리스의 `SHA256SUMS` 파일에 있는 해당 줄과 비교하세요. 값이 일치하면 **추가 정보 > 실행**을 선택합니다. 서명되지 않은 실행 파일을 아예 실행하고 싶지 않다면, 위의 방법으로 소스에서 직접 빌드하세요.
+결과값을 같은 릴리스의 `SHA256SUMS-<version>.txt` 파일에 있는 해당 줄과 비교하세요. 값이 일치하면 **추가 정보 > 실행**을 선택합니다. 서명되지 않은 실행 파일을 아예 실행하고 싶지 않다면, 위의 방법으로 소스에서 직접 빌드하세요.
 
 ### 트레이 아이콘 표시하기
 
@@ -105,6 +105,6 @@ native\out\CodexWeekUsageTray.exe --self-test
 - 네이티브 호스트에는 업데이터, 다운로더, 시작 프로그램 등록, 앱 자체 네트워크 클라이언트가 없습니다. 계정 관련 통신은 Codex CLI가 로컬 stdio 연결을 통해 직접 처리합니다.
 - 릴리스 EXE는 아직 Authenticode 서명이 되어 있지 않습니다. 내려받은 파일을 실행하기 전에 공개된 SHA-256 값을 확인하세요.
 
-v2.0.1 이후 릴리스에는 EXE, `uninstall.cmd`, 그리고 이에 대응하는 `SHA256SUMS` 매니페스트가 포함됩니다. 압축 파일에는 .NET 런타임, DLL, PDB가 들어 있지 않습니다. v2.0.0에는 EXE만 포함되어 있었습니다.
+v2.0.1 이후 릴리스에는 EXE, `uninstall.cmd`, 그리고 이에 대응하는 `SHA256SUMS-<version>.txt` 매니페스트가 포함됩니다. 압축 파일에는 .NET 런타임, DLL, PDB가 들어 있지 않습니다. v2.0.0에는 EXE만 포함되어 있었습니다.
 
 앱은 현재 한도를 메모리에만 보관합니다. Windows가 일반적인 알림 아이콘 설정을 유지할 수 있으며, Codex CLI는 자체 세션 데이터를 보관합니다.
